@@ -1,0 +1,1 @@
+nohup java -jar mini-pg-0.0.1-SNAPSHOT.jar Dspring.config.location=application.properties >>mini_pg.log &
