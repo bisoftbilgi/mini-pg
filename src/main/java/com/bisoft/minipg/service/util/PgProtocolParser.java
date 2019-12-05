@@ -6,6 +6,7 @@ import com.bisoft.minipg.service.pgwireprotocol.server.ParsePacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.PasswordPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.PgAddSyncSlave;
 import com.bisoft.minipg.service.pgwireprotocol.server.PgPromotePacket;
+import com.bisoft.minipg.service.pgwireprotocol.server.PgRemoveSyncSlave;
 import com.bisoft.minipg.service.pgwireprotocol.server.PgRewindPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.PgStartPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.PgStatusPacket;
@@ -19,11 +20,11 @@ import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class PgProtocolParser {
-
+    
     public static final Logger logger = LoggerFactory.getLogger(PgProtocolParser.class);
-
+    
     public WireProtocolPacket parsePacket(byte[] buffer) {
-
+        
         WireProtocolPacket result     = null;
         String             strMessage = ByteUtil.byteArrayToAsciiDump(buffer);
         log.trace("parsePacket  " + strMessage);
@@ -47,12 +48,14 @@ public class PgProtocolParser {
             result = new VersionPacket().decodeBuffer(buffer);
         } else if (PgAddSyncSlave.matches(strMessage)) {
             result = new PgAddSyncSlave().decodeBuffer(buffer);
+        } else if (PgRemoveSyncSlave.matches(strMessage)) {
+            result = new PgRemoveSyncSlave().decodeBuffer(buffer);
         } else if (ParsePacket.packetMatches(buffer)) {
             result = new ParsePacket().decodeBuffer(buffer);
         }
-
+        
         return result;
-
+        
     }
-
+    
 }
