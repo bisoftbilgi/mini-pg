@@ -4,6 +4,7 @@ import com.bisoft.minipg.service.pgwireprotocol.Util;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -69,16 +70,16 @@ public class PgAddSyncSlave extends AbstractWireProtocolPacket {
     public Boolean checkIfMaster() {
 
         Boolean res = true;
-//        try {
-//            File file = new File(ConfigurationService.GetValue("minipg.postgres_data_path") + "recovery.conf");
-//            if (file.exists() && !file.isDirectory()) {
-//                res = true;
-//            } else {
-//                res = false;
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            File file = new File(ConfigurationService.GetValue("minipg.postgres_data_path") + "recovery.conf");
+            if (file.exists() && !file.isDirectory()) {
+                res = true;
+            } else {
+                res = false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return res;
     }
 

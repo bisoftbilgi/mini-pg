@@ -70,16 +70,16 @@ public class PgRemoveSyncSlave extends AbstractWireProtocolPacket {
     public Boolean checkIfMaster() {
 
         Boolean res = true;
-//        try {
-//            File file = new File(ConfigurationService.GetValue("minipg.postgres_data_path") + "recovery.conf");
-//            if (file.exists() && !file.isDirectory()) {
-//                res = true;
-//            } else {
-//                res = false;
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            File file = new File(ConfigurationService.GetValue("minipg.postgres_data_path") + "recovery.conf");
+            if (file.exists() && !file.isDirectory()) {
+                res = true;
+            } else {
+                res = false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return res;
     }
 
