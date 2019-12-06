@@ -1,6 +1,7 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
+import com.bisoft.minipg.service.pgwireprotocol.server.Response.CommandExecutor;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
@@ -62,9 +63,20 @@ public class PgRemoveSyncSlave extends AbstractWireProtocolPacket {
         if (checkIfMaster()) {
             removeSubProp(ConfigurationService.GetValue("minipg.postgres_data_path") + "data/postgresql.auto.conf",
                 "synchronous_standby_names", syncName);
+            runReload();
         } else {
             throw new Exception("I'm not a master!");
         }
+    }
+
+    private void runReload() {
+
+        log.info("running the command: {} {} {} {}", ConfigurationService.GetValue("minipg.postgres_data_path"), "pg_ctl", "reload",
+            "-D" + ConfigurationService.GetValue("minipg.postgres_data_path"));
+
+        (new CommandExecutor()).executeCommand(
+            ConfigurationService.GetValue("minipg.postgres_bin_path") + "pg_ctl", "reload",
+            "-D" + ConfigurationService.GetValue("minipg.postgres_data_path"));
     }
 
     public Boolean checkIfMaster() {
@@ -102,7 +114,7 @@ public class PgRemoveSyncSlave extends AbstractWireProtocolPacket {
         List<String> ipList       = new LinkedList<>(Arrays.asList(syncNodesArr));
 
         List<String> newList = ipList.stream()                // convert list to stream
-            .filter(line -> !propValue.equals(line)&& line.trim().length() > 0)
+            .filter(line -> !propValue.equals(line) && line.trim().length() > 0)
             .collect(Collectors.toList());
 
         String line = "'" + newList.stream().collect(Collectors.joining(",")) + "'";
