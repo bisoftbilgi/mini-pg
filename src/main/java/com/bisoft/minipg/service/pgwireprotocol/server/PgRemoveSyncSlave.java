@@ -70,16 +70,16 @@ public class PgRemoveSyncSlave extends AbstractWireProtocolPacket {
     public Boolean checkIfMaster() {
 
         Boolean res = true;
-        try {
-            File file = new File(ConfigurationService.GetValue("minipg.postgres_data_path") + "recovery.conf");
-            if (file.exists() && !file.isDirectory()) {
-                res = true;
-            } else {
-                res = false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            File file = new File(ConfigurationService.GetValue("minipg.postgres_data_path") + "recovery.conf");
+//            if (file.exists() && !file.isDirectory()) {
+//                res = true;
+//            } else {
+//                res = false;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
         return res;
     }
 
@@ -100,13 +100,10 @@ public class PgRemoveSyncSlave extends AbstractWireProtocolPacket {
 
         String[]     syncNodesArr = syncNodes.split(",");
         List<String> ipList       = new LinkedList<>(Arrays.asList(syncNodesArr));
-        List<String> newList      = new ArrayList<>();
 
-        for (String string : ipList) {
-            if (!string.trim().equals(propValue) && string.trim().length() > 0) {
-                newList.add(string.trim());
-            }
-        }
+        List<String> newList = ipList.stream()                // convert list to stream
+            .filter(line -> !propValue.equals(line)&& line.trim().length() > 0)
+            .collect(Collectors.toList());
 
         String line = "'" + newList.stream().collect(Collectors.joining(",")) + "'";
         config.setProperty("synchronous_standby_names", line);
