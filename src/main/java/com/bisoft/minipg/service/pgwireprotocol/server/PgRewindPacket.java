@@ -44,13 +44,13 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 
 //		host=192.168.2.90 port=5432 user=postgres 
 		String rewindCommand = ConfigurationService.GetValue("minipg.postgres_bin_path") + "pg_rewind"
-				+ "--target-pgdata=" + ConfigurationService.GetValue("minipg.postgres_data_path")
-				+ "--source-server=\"host=" + pgRewindMasterIp + "\"";
+				+ " --target-pgdata=" + ConfigurationService.GetValue("minipg.postgres_data_path")
+				+ " --source-server=\"host=" + pgRewindMasterIp + "\"";
 		log.info("EXECUTING THIS COMMAND for REWINDING===> " + rewindCommand);
 		List<String> cellValues = (new CommandExecutor()).executeCommand(
 				ConfigurationService.GetValue("minipg.postgres_bin_path") + "pg_rewind",
-				"--target-pgdata=" + ConfigurationService.GetValue("minipg.postgres_data_path"),
-				"--source-server=\"host=" + pgRewindMasterIp + "\"");
+				" --target-pgdata=" + ConfigurationService.GetValue("minipg.postgres_data_path"),
+				" --source-server=\"host=" + pgRewindMasterIp + "\"");
 
 		reGenerateRecoveryConf(pgRewindMasterIp, "5432");
 		cellValues.add(0, PG_REWIND + " received.." + rewindCommand + " command executed at : " + new Date());

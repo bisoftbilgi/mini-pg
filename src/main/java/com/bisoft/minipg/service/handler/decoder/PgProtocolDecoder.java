@@ -46,7 +46,8 @@ public class PgProtocolDecoder extends MessageToMessageDecoder<ByteBuf> {
 		String result = ByteUtil.byteArrayToHexAndAsciiAndDecDumpWithTab(ByteUtil.decodeAsBytes(copiedMsg));
 		logger.trace("=================FROM CLIENT---===============\n{}", result);
 		logger.trace("================================");
-		return copiedMsg;
+		copiedMsg.release();
+		return byteBuf;
 	}
 
 }
