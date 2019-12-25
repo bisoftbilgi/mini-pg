@@ -8,13 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class ScriptExecuter {
-	public static final Logger logger = LoggerFactory.getLogger(ScriptExecuter.class);
-
+ 
 	public List<String> executeScript(String... args) {
 		for (String string : args) {
 			log.info("executing:" + string);
