@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -15,6 +17,7 @@ import com.bisoft.minipg.service.pgwireprotocol.server.Response.CommandExecutor;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -61,9 +64,20 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 //	@Deprecated
 	private void reGenerateRecoveryConf(String masterIP, String masterPort) {
 		log.info("REGENERATING recovery.conf with " + masterIP + ":" + masterPort);
-		String recoveryConfTemplate = "standby_mode ='on'\n"
-				+ " primary_conninfo = 'user=postgres passfile=''/var/lib/pgsql/.pgpass'' host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=1 krbsrvname=postgres target_session_attrs=any application_name=mini-pg-did'\n"
-				+ " recovery_target_timeline='latest' ";
+		String operatingSystem = ConfigurationService.GetValue("minipg.os");
+		String recoveryConfTemplate = null;
+		String hostName = getHostName();
+		if (operatingSystem.startsWith("windows")) {
+			recoveryConfTemplate = "standby_mode ='on'\n"
+					+ " primary_conninfo = 'user=postgres host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=1 krbsrvname=postgres application_name="
+					+ hostName + "'\n" + " recovery_target_timeline='latest' ";
+
+		} else {
+			recoveryConfTemplate = "standby_mode ='on'\n"
+					+ " primary_conninfo = 'user=postgres passfile=''/var/lib/pgsql/.pgpass'' host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=1 krbsrvname=postgres target_session_attrs=any application_name="
+					+ hostName + "'\n" + " recovery_target_timeline='latest' ";
+
+		}
 
 		Writer writer = null;
 
@@ -88,10 +102,20 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 		return Util.caseInsensitiveContains(messageStr, PG_REWIND);
 	}
 
-//	private static boolean generateRecoveryConf()
-//	{
-//		String recoveryConfTemplate="standby_mode = 'on' \n"
-//				+"primary_conninfo = 'user=postgres passfile=''"++".pgpass'' host=192.168.2.91 port=5432 sslmode=prefer sslcompression=1 krbsrvname=postgres target_session_attrs=any'
-//
-//	}
+	private String getHostName() {
+		InetAddress ip;
+		String hostname;
+		try {
+			ip = InetAddress.getLocalHost();
+			hostname = ip.getHostName();
+			System.out.println("Your current IP address : " + ip);
+			System.out.println("Your current Hostname : " + hostname);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+		}
+		return hostname;
+	}
+
 }
