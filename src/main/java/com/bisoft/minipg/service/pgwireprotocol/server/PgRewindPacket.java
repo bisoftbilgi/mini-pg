@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -104,7 +105,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 
 	private String getHostName() {
 		InetAddress ip;
-		String hostname;
+		String hostname = UUID.randomUUID().toString();
 		try {
 			ip = InetAddress.getLocalHost();
 			hostname = ip.getHostName();
