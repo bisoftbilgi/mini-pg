@@ -11,11 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class PasswordPacketTest {
     private PasswordPacket passwordPacket;
 
-    @BeforeEach
-    void init() {
-        this.passwordPacket = new PasswordPacket();
-    }
-
     @Test
     public void passwordPacketTrueTest() {
         byte[] buffer = new byte[] { 112, 0, 0, 0, 40, 109, 100, 53, 40, 50, 3, 32, 112, 103, 95, 114, 101, 119, 105, 110, 100, 40, 49,

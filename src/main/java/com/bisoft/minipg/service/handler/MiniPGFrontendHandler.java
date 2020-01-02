@@ -2,11 +2,7 @@ package com.bisoft.minipg.service.handler;
 
 import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
 import com.bisoft.minipg.service.util.ByteUtil;
-
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -18,8 +14,9 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 @Slf4j
 public class MiniPGFrontendHandler extends ChannelInboundHandlerAdapter {
 
-	public static final Logger logger = LoggerFactory.getLogger(MiniPGFrontendHandler.class);
+	private boolean isAuthenticated;
 	private Channel outboundChannel;
+	private Channel inboundChannel;
 	ChannelFuture channelFuture;
 
 	@Override
@@ -90,5 +87,4 @@ public class MiniPGFrontendHandler extends ChannelInboundHandlerAdapter {
 			ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
 		}
 	}
-
 }

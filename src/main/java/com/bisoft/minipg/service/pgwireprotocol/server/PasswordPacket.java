@@ -2,37 +2,35 @@ package com.bisoft.minipg.service.pgwireprotocol.server;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-
+import com.bisoft.minipg.service.pgwireprotocol.Util;
+import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
+import com.bisoft.minipg.service.pgwireprotocol.server.ErrorResponsePojo;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@RequiredArgsConstructor
+@Component
+@Scope("prototype")
+@Lazy
 public class PasswordPacket extends AbstractWireProtocolPacket {
-	public static final Logger logger = LoggerFactory.getLogger(PasswordPacket.class);
 
-	String hash;
+	private byte[] hashBytes;
+	private byte[] salt;
 	Object msg;
+	private final Md5Authenticator authenticator;
 
 	public WireProtocolPacket decode(byte[] buffer) {
-		// 0000 70 00 00 00 28 6d 64 35 64 31 65 61 65 64 31 31
-		// p . . . ( m d 5 d 1eaed11
+		int packetLength = buffer.length; // ByteUtil.fromByteArray(buffer);
 
-		int packetLengt = buffer.length; // ByteUtil.fromByteArray(buffer);
-
-		hash = new String(Arrays.copyOfRange(buffer, 8, packetLengt));
-		log.trace("PasswordPacket hash : " + hash);
-		byte[] hashBytes = hash.getBytes(StandardCharsets.UTF_8);
-		log.trace("PasswordPacket hash : " + hashBytes);
+		hashBytes = Util.readByteArray(buffer, 5,
+				packetLength);
+		String hashStr = new String(hashBytes);
+		log.trace("PasswordPacket hash : {}", hashStr);
 		return this;
-	}
-
-	public String getHash() {
-		return hash;
-	}
-
-	public void setHash(String value) {
-		hash = value;
 	}
 
 	public Object getMsg() {
@@ -45,16 +43,27 @@ public class PasswordPacket extends AbstractWireProtocolPacket {
 
 	@Override
 	public String toString() {
-		return "[PasswordPacket:" + hash + "]";
+		return "[PasswordPacket:" + hashBytes + "]";
 	}
 
 	@Override
 	public byte[] response() {
-		return PgConstants.AUTH_OK;
+		if (isAuthenticated()) {
+			return PgConstants.AUTH_OK;
+		}
+		return ErrorResponsePojo.generateErrorResponse("ERROR", "22000", "Minipg : Authentication Failed");
+	}
+
+	public byte[] getSalt() {
+		return salt;
+	}
+
+	public boolean isAuthenticated() {
+		return authenticator.authenticate(hashBytes, getSalt());
 	}
 
 	public static boolean packetMatches(byte[] buffer) {
-		return buffer.length > 8 && buffer[0] == 112 && buffer[4] == 40 && buffer[5] == 109 && buffer[6] == 100
-				&& buffer[7] == 53;
+		int passwordLength = Util.readInt32(buffer, 1);
+		return buffer.length > 4 && buffer[0] == 'p' && (LENGTH_OF_CHARACTER_TAG + passwordLength) == buffer.length;
 	}
 }

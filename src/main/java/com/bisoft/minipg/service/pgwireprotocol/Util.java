@@ -8,6 +8,8 @@ import java.util.Arrays;
  * Util
  */
 public final class Util {
+    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+    private static final String EMPTY_STRING = "";
 
     public static byte[] concatByteArray(byte[] a, byte[] b) {
         if (a == null) {
@@ -102,4 +104,8 @@ public final class Util {
         }
         return new String(buffer);
     }
+    public static byte[] byteZero() {
+        return new byte[] { 0 };
+    }
+
 }
