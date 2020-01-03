@@ -1,49 +1,38 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import com.bisoft.minipg.service.SessionState;
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
-import com.bisoft.minipg.service.pgwireprotocol.server.ErrorResponsePojo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
-@RequiredArgsConstructor
-@Component
-@Scope("prototype")
-@Lazy
 public class PasswordPacket extends AbstractWireProtocolPacket {
 
+	public static final Logger logger = LoggerFactory.getLogger(PasswordPacket.class);
+
+	private static final int LENGTH_OF_TRAILING_ZERO_BYTE = 1;
 	private byte[] hashBytes;
-	private byte[] salt;
-	Object msg;
-	private final Md5Authenticator authenticator;
+
+	@Autowired
+	private Md5Authenticator authenticator;
+	private SessionState sessionState;
 
 	public WireProtocolPacket decode(byte[] buffer) {
 		int packetLength = buffer.length; // ByteUtil.fromByteArray(buffer);
-
 		hashBytes = Util.readByteArray(buffer, 5,
-				packetLength);
+				packetLength - LENGTH_OF_CHARACTER_TAG_AND_LENGTH_FIELD - LENGTH_OF_TRAILING_ZERO_BYTE);
 		String hashStr = new String(hashBytes);
 		log.trace("PasswordPacket hash : {}", hashStr);
 		return this;
 	}
 
-	public Object getMsg() {
-		return msg;
-	}
-
-	public void setMsg(Object message) {
-		this.msg = message;
-	}
-
 	@Override
 	public String toString() {
-		return "[PasswordPacket:" + hashBytes + "]";
+		return "[PasswordPacket:" +  Arrays.toString(hashBytes) + "]";
 	}
 
 	@Override
@@ -54,12 +43,12 @@ public class PasswordPacket extends AbstractWireProtocolPacket {
 		return ErrorResponsePojo.generateErrorResponse("ERROR", "22000", "Minipg : Authentication Failed");
 	}
 
-	public byte[] getSalt() {
-		return salt;
+	public void setSessionState(SessionState sessionState) {
+		this.sessionState = sessionState;
 	}
 
 	public boolean isAuthenticated() {
-		return authenticator.authenticate(hashBytes, getSalt());
+		return authenticator.authenticate(hashBytes, sessionState.getSalt());
 	}
 
 	public static boolean packetMatches(byte[] buffer) {

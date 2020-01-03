@@ -1,9 +1,6 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
-import com.bisoft.minipg.service.pgwireprotocol.server.AbstractWireProtocolPacket;
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
-import com.bisoft.minipg.service.pgwireprotocol.server.ErrorResponsePojo;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.ReadyForQuery;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
@@ -29,7 +26,7 @@ public class UnauthorizedPacket extends AbstractWireProtocolPacket {
         return Util.concatByteArray(errorResponse, readyForQueryResponse);
     }
 
-    public static boolean isUnauthorizedPacket(String strMessage) {
+    public static boolean matches(String strMessage) {
         return Util.caseInsensitiveContains(strMessage, "--unauthorized");
     }
 }

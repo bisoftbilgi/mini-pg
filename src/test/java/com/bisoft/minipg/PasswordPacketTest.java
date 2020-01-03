@@ -1,21 +1,18 @@
 package com.bisoft.minipg;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.bisoft.minipg.service.pgwireprotocol.server.PasswordPacket;
-
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PasswordPacketTest {
+
     private PasswordPacket passwordPacket;
 
     @Test
     public void passwordPacketTrueTest() {
-        byte[] buffer = new byte[] { 112, 0, 0, 0, 40, 109, 100, 53, 40, 50, 3, 32, 112, 103, 95, 114, 101, 119, 105, 110, 100, 40, 49,
-                57, 50, 46, 49, 54, 56, 46, 53, 46, 56, 41, 0, 0, 0, 66, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 68, 0, 0,
-                0, 6, 80, 0, 69, 0, 0, 0, 9, 0, 0, 0, 0, 0, 83, 0, 0, 0, 4};
+        byte[] buffer = new byte[] { 0x70, 0x00, 0x00, 0x00, 0x28, 0x6d, 0x64, 0x35, 0x30, 0x34, 0x61, 0x64, 0x35, 0x62,
+                0x35, 0x65, 0x31, 0x64, 0x32, 0x30, 0x64, 0x33, 0x61, 0x39, 0x66, 0x62, 0x36, 0x64, 0x33, 0x64, 0x31,
+                0x64, 0x36, 0x63, 0x35, 0x62, 0x65, 0x36, 0x30, 0x31, 0x00};
         boolean packetMatches = passwordPacket.packetMatches(buffer);
         assertTrue(packetMatches);
     }

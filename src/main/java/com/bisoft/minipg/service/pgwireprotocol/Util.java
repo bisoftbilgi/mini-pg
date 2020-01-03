@@ -11,6 +11,10 @@ public final class Util {
     public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     private static final String EMPTY_STRING = "";
 
+    private Util() {
+        super();
+    }
+
     public static byte[] concatByteArray(byte[] a, byte[] b) {
         if (a == null) {
             return b;
