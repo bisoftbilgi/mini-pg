@@ -1,22 +1,21 @@
 package com.bisoft.minipg.service.pgwireprotocol.server.Response;
 
-import com.bisoft.minipg.service.pgwireprotocol.Util;
 import java.util.Arrays;
 import java.util.List;
+
+import com.bisoft.minipg.service.pgwireprotocol.Util;
 
 /**
  * CommandComplete
  */
 public class CommandComplete extends AbstractMessageResponse {
-
     private static List<String> INCLUDE_NUM_VALUES_STRINGS = Arrays.asList("INSERT", "DELETE", "UPDATE", "SELECT",
-        "CREATETABLEAS", "MOVE", "FETCH", "COPY");
+            "CREATETABLEAS", "MOVE", "FETCH", "COPY");
     String command; // INSERT/DELETE/UPDATE/SELECT/CREATETABLEAS/MOVE/FETCH/COPY
-    int    rows = 0;
-    int    oid  = 0;
+    int rows = 0;
+    int oid = 0;
 
     public CommandComplete(String command, int rows) {
-
         this.characterTag = 'C';
         this.command = command;
         this.rows = rows;
@@ -24,7 +23,6 @@ public class CommandComplete extends AbstractMessageResponse {
 
     @Override
     public byte[] generateMessage() {
-
         byte[] commandBytes = commandBytes();
         length = commandBytes.length + LENGTH_OF_LENGTH_FIELD;
         byte[] result = characterTagAndLength();
@@ -33,7 +31,6 @@ public class CommandComplete extends AbstractMessageResponse {
     }
 
     private byte[] commandBytes() {
-
         String commandStr = command;
         if (INCLUDE_NUM_VALUES_STRINGS.contains(command)) {
             commandStr = command + " " + rows;

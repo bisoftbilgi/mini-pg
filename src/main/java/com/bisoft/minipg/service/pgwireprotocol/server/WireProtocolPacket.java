@@ -4,7 +4,6 @@ package com.bisoft.minipg.service.pgwireprotocol.server;
  * WireProtocolPacket
  */
 public interface WireProtocolPacket {
-
     Character getCharacterTag();
 
     int getLength();
