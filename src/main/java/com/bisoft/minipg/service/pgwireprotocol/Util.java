@@ -10,6 +10,7 @@ import java.util.Arrays;
 public final class Util {
 
     public static byte[] concatByteArray(byte[] a, byte[] b) {
+
         if (a == null) {
             return b;
         } else if (b == null) {
@@ -22,32 +23,38 @@ public final class Util {
     }
 
     public static int readInt32(byte[] buffer, int start) {
+
         byte[] bytes = readByteArray(buffer, start, 4);
         return ByteBuffer.wrap(bytes).getInt();
     }
 
     public static int readInt16(byte[] buffer, int start) {
+
         byte[] bytes = readByteArray(buffer, start, 2);
-        bytes = concatByteArray(new byte[] { 0, 0 }, bytes);
+        bytes = concatByteArray(new byte[]{0, 0}, bytes);
         return ByteBuffer.wrap(bytes).getInt();
     }
 
     public static byte readInt8(byte[] buffer, int start) {
+
         return buffer[start];
     }
 
     public static byte[] readByteArray(byte[] buffer, int start, int length) {
+
         byte[] bytes = Arrays.copyOfRange(buffer, start, start + length);
         return bytes;
     }
 
     public static String readCString(byte[] buffer, int start) {
+
         byte[] bytes = bytesBefore(buffer, start, (byte) 0);
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
     public static byte[] bytesBefore(byte[] buffer, int start, byte searchCharacter) {
-        int end = -1;
+
+        int end   = -1;
         int index = start;
         while (index < buffer.length && end < 0) {
             if (buffer[index] == searchCharacter) {
@@ -58,10 +65,11 @@ public final class Util {
         if (end > -1) {
             return readByteArray(buffer, start, end - start);
         }
-        return new byte[] {};
+        return new byte[]{};
     }
 
     public static int[] readInt32Array(byte[] buffer, int start, int lengthParameterDataTypes) {
+
         int[] result = new int[lengthParameterDataTypes];
         for (int i = 0; i < lengthParameterDataTypes; i++) {
             result[i] = Util.readInt32(buffer, start + i * 4);
@@ -70,18 +78,22 @@ public final class Util {
     }
 
     public static byte[] int32ByteArray(int value) {
-        return new byte[] { (byte) (value >>> 24), (byte) (value >>> 16), (byte) (value >>> 8), (byte) value };
+
+        return new byte[]{(byte) (value >>> 24), (byte) (value >>> 16), (byte) (value >>> 8), (byte) value};
     }
 
     public static byte[] int16ByteArray(int value) {
-        return new byte[] { (byte) (value >>> 8), (byte) value };
+
+        return new byte[]{(byte) (value >>> 8), (byte) value};
     }
 
     public static byte[] int8ByteArray(int value) {
-        return new byte[] { (byte) value };
+
+        return new byte[]{(byte) value};
     }
 
     public static byte[] toCString(String commandStr) {
+
         byte[] bytes = {};
         if (commandStr != null) {
             bytes = commandStr.getBytes(StandardCharsets.UTF_8);
@@ -90,6 +102,7 @@ public final class Util {
     }
 
     public static boolean caseInsensitiveContains(String string, String pattern) {
+
         if (pattern == null || string == null || string.equals("")) {
             return false;
         }
@@ -97,6 +110,7 @@ public final class Util {
     }
 
     public static String byteArrayToString(byte[] buffer) {
+
         if (buffer == null) {
             return "";
         }
