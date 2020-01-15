@@ -17,19 +17,22 @@ public class TableHelper {
     }
 
     private List<DataRow> dataRows(RowDescription rowDescription, List<String> cellValues) {
+
         List<DataRow> dataRows = cellValues.stream().map(x -> dataRow(rowDescription, x)).collect(Collectors.toList());
         return dataRows;
     }
 
     private DataRow dataRow(RowDescription rowDescription, String cellValue) {
-        DataRow dataRow = new DataRow(rowDescription);
-        DataCell cell = dataCellVersion(rowDescription, cellValue);
-        DataCell[] cells = { cell };
+
+        DataRow    dataRow = new DataRow(rowDescription);
+        DataCell   cell    = dataCellVersion(rowDescription, cellValue);
+        DataCell[] cells   = {cell};
         dataRow.setCells(cells);
         return dataRow;
     }
 
     private DataCell dataCellVersion(RowDescription rowDescription, String cellValue) {
+
         DataCell dataCell = new DataCell(rowDescription.getCells()[0]);
         dataCell.setValue(cellValue);
         // dataCell.setValue(POSTGRE_SQL_10_7);
@@ -38,9 +41,10 @@ public class TableHelper {
     }
 
     private RowDescription rowDescription(String fieldName) {
-        RowDescription rowDescription = new RowDescription();
-        CellDescription cdVersion = versionCell(fieldName);
-        CellDescription[] cells = { cdVersion };
+
+        RowDescription    rowDescription = new RowDescription();
+        CellDescription   cdVersion      = versionCell(fieldName);
+        CellDescription[] cells          = {cdVersion};
         rowDescription.setCells(cells);
         return rowDescription;
     }

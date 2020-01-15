@@ -6,10 +6,12 @@ import com.bisoft.minipg.service.pgwireprotocol.Util;
  * DataRow
  */
 public class DataRow extends AbstractMessageResponse {
+
     private RowDescription rowDescription;
-    private DataCell cells[];
+    private DataCell       cells[];
 
     int getNumberOfColumns() {
+
         return cells.length;
     }
 
@@ -17,6 +19,7 @@ public class DataRow extends AbstractMessageResponse {
      * @return the rowDescription
      */
     public RowDescription getRowDescription() {
+
         return rowDescription;
     }
 
@@ -24,6 +27,7 @@ public class DataRow extends AbstractMessageResponse {
      * @param rowDescription the rowDescription to set
      */
     public DataRow setRowDescription(RowDescription rowDescription) {
+
         this.rowDescription = rowDescription;
         return this;
     }
@@ -32,6 +36,7 @@ public class DataRow extends AbstractMessageResponse {
      * @return the cells
      */
     public DataCell[] getCells() {
+
         return cells;
     }
 
@@ -39,11 +44,13 @@ public class DataRow extends AbstractMessageResponse {
      * @param cells the cells to set
      */
     public DataRow setCells(DataCell cells[]) {
+
         this.cells = cells;
         return this;
     }
 
     public DataRow(RowDescription rowDescription) {
+
         this.characterTag = 'D';
         this.setRowDescription(rowDescription);
     }

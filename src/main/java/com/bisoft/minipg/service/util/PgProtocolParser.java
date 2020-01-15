@@ -20,11 +20,11 @@ import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class PgProtocolParser {
-    
+
     public static final Logger logger = LoggerFactory.getLogger(PgProtocolParser.class);
-    
+
     public WireProtocolPacket parsePacket(byte[] buffer) {
-        
+
         WireProtocolPacket result     = null;
         String             strMessage = ByteUtil.byteArrayToAsciiDump(buffer);
         log.trace("parsePacket  " + strMessage);
@@ -53,9 +53,9 @@ public class PgProtocolParser {
         } else if (ParsePacket.packetMatches(buffer)) {
             result = new ParsePacket().decodeBuffer(buffer);
         }
-        
+
         return result;
-        
+
     }
-    
+
 }
