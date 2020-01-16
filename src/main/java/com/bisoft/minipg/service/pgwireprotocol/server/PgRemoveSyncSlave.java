@@ -24,10 +24,10 @@ public class PgRemoveSyncSlave extends AbstractWireProtocolPacket {
 
     private static final String PG_ADD_SYNC_SLAVE = "-- pg_remove_sync_slave";
     private static final String SLAVE_APP_NAME    = "(?<slaveAppName>.*)";
-    private static final String RIGHT_PARANTHESIS = "[)]";
-    private static final String LEFT_PARANTHESIS  = "[(]";
-    String REGEX_ADD_SYNC_SLAVE = ".*" + PG_ADD_SYNC_SLAVE + LEFT_PARANTHESIS + SLAVE_APP_NAME
-        + RIGHT_PARANTHESIS + ".*";
+    private static final String RIGHT_PARENTHESES = "[)]";
+    private static final String LEFT_PARENTHESES  = "[(]";
+    String REGEX_ADD_SYNC_SLAVE = ".*" + PG_ADD_SYNC_SLAVE + LEFT_PARENTHESES + SLAVE_APP_NAME
+        + RIGHT_PARENTHESES + ".*";
     private String slaveAppName;
 
     public WireProtocolPacket decode(byte[] buffer) {
