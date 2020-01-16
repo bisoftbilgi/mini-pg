@@ -1,5 +1,6 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
+import com.bisoft.minipg.service.util.ByteUtil;
 import java.util.Date;
 import java.util.List;
 
@@ -38,6 +39,7 @@ public class PgPromotePacket extends AbstractWireProtocolPacket {
 
 	public static boolean matches(String messageStr) {
 		log.debug(messageStr);
+		System.out.println(ByteUtil.byteArrayToHexAndAsciiAndDecDump(messageStr.getBytes()));
 		return Util.caseInsensitiveContains(messageStr, PG_COMM_PREFIX);
 	}
 }

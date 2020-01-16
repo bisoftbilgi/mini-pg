@@ -116,4 +116,9 @@ public final class Util {
         }
         return new String(buffer);
     }
+
+    public static byte[] byteZero() {
+        return new byte[] { 0 };
+    }
+
 }
