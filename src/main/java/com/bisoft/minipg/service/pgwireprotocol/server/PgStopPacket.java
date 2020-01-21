@@ -9,7 +9,7 @@ import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
 
-public class PgStopPacket extends AbstractWireProtocolPacket {
+public class PgStopPacket extends com.bisoft.minipg.service.pgwireprotocol.server.AbstractWireProtocolPacket {
 
 	private static final String PG_COMM_PREFIX = "-- pg_stop";
 

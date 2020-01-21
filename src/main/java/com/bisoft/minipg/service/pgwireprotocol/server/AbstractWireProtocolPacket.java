@@ -9,6 +9,12 @@ import java.util.Arrays;
  */
 public abstract class AbstractWireProtocolPacket implements WireProtocolPacket {
 
+    public static final int LENGTH_OF_CHARACTER_TAG = 1;
+    public static final int LENGTH_OF_LENGTH_FIELD = 4;
+    public static final int LENGTH_OF_CHARACTER_TAG_AND_LENGTH_FIELD = LENGTH_OF_CHARACTER_TAG + LENGTH_OF_LENGTH_FIELD;
+    private static final int LENGTH_OF_PROTOCOL_VERSION_NO = 4;
+
+
     protected char   characterTag;
     protected int    length;
     protected byte[] payload;

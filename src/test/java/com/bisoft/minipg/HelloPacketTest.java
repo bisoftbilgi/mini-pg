@@ -1,9 +1,7 @@
 package com.bisoft.minipg;
 
 import com.bisoft.minipg.service.pgwireprotocol.server.HelloPacket;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class HelloPacketTest {
@@ -15,7 +13,6 @@ public class HelloPacketTest {
 
         this.helloPacket = new HelloPacket();
     }
-
 
     public void helloPacketTest() {
 
