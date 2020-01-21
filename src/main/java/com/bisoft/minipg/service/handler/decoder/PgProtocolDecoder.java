@@ -13,10 +13,17 @@ import org.slf4j.LoggerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PgProtocolDecoder extends MessageToMessageDecoder<ByteBuf> {
 	public static final Logger logger = LoggerFactory.getLogger(PgProtocolDecoder.class);
-	PgProtocolParser pgProtocolParser = new PgProtocolParser();
+
+	@Autowired
+	PgProtocolParser pgProtocolParser ;
+	//= new PgProtocolParser();
 
 	@Override
 	protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) throws Exception {

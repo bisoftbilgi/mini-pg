@@ -1,5 +1,8 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class HelloPacket extends AbstractWireProtocolPacket {
 
     @Override

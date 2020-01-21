@@ -19,7 +19,6 @@ public class ScriptExecuter {
 		List<String> cellValues = new ArrayList<>();
 		try {
 			ProcessBuilder builder = new ProcessBuilder(args);
-//			builder.directory(new File(ConfigurationService.GetValue("minipg.postgres_bin_path")));
 			builder.redirectErrorStream(true);
 
 			Process process = builder.start();

@@ -1,8 +1,11 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
+import org.springframework.stereotype.Component;
+
 /**
  * ErrorResponsePojo
  */
+@Component
 public class ErrorResponsePojo {
     /*
      * byte[] Severity; byte[] VSeverity; byte[]

@@ -1,6 +1,7 @@
 package com.bisoft.minipg.service.util;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
+import com.bisoft.minipg.service.pgwireprotocol.server.AbstractWireProtocolPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.HelloPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.ParsePacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.PasswordPacket;
@@ -15,47 +16,51 @@ import com.bisoft.minipg.service.pgwireprotocol.server.StartupPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.VersionPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class PgProtocolParser {
-    
-    public static final Logger logger = LoggerFactory.getLogger(PgProtocolParser.class);
-    
+
+    @Autowired
+    protected ContextWrapper contextWrapper;
+
     public WireProtocolPacket parsePacket(byte[] buffer) {
-        
-        WireProtocolPacket result     = null;
-        String             strMessage = ByteUtil.byteArrayToAsciiDump(buffer);
+
+        String strMessage = ByteUtil.byteArrayToAsciiDump(buffer);
         log.trace("parsePacket  " + strMessage);
+
+        Class<? extends WireProtocolPacket> resultType = ParsePacket.class;
+
         if (HelloPacket.packetMatches(buffer)) {
-            result = new HelloPacket().decodeBuffer(buffer);
+            resultType = HelloPacket.class;
         } else if (StartupPacket.packetMatches(buffer)) {
-            result = new StartupPacket().decodeBuffer(buffer);
+            resultType = StartupPacket.class;
         } else if (PasswordPacket.packetMatches(buffer)) {
-            result = new PasswordPacket().decodeBuffer(buffer);
+            resultType = PasswordPacket.class;
         } else if (PgRewindPacket.matches(strMessage)) {
-            result = new PgRewindPacket().decodeBuffer(buffer);
+            resultType = PgRewindPacket.class;
         } else if (PgStartPacket.matches(strMessage)) {
-            result = new PgStartPacket().decodeBuffer(buffer);
+            resultType = PgStartPacket.class;
         } else if (PgStatusPacket.matches(strMessage)) {
-            result = new PgStatusPacket().decodeBuffer(buffer);
+            resultType = PgStatusPacket.class;
         } else if (PgStopPacket.matches(strMessage)) {
-            result = new PgStopPacket().decodeBuffer(buffer);
+            resultType = PgStopPacket.class;
         } else if (PgPromotePacket.matches(strMessage)) {
-            result = new PgPromotePacket().decodeBuffer(buffer);
+            resultType = PgPromotePacket.class;
         } else if (Util.caseInsensitiveContains(strMessage, "version")) {
-            result = new VersionPacket().decodeBuffer(buffer);
+            resultType = VersionPacket.class;
         } else if (PgAddSyncSlave.matches(strMessage)) {
-            result = new PgAddSyncSlave().decodeBuffer(buffer);
+            resultType = PgAddSyncSlave.class;
         } else if (PgRemoveSyncSlave.matches(strMessage)) {
-            result = new PgRemoveSyncSlave().decodeBuffer(buffer);
+            resultType = PgRemoveSyncSlave.class;
         } else if (ParsePacket.packetMatches(buffer)) {
-            result = new ParsePacket().decodeBuffer(buffer);
+            resultType = ParsePacket.class;
         }
-        
-        return result;
-        
+
+        return ((AbstractWireProtocolPacket) contextWrapper.createBean(resultType)).decode(buffer);
+
     }
-    
+
 }

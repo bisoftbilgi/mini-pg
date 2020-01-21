@@ -9,8 +9,10 @@ import com.bisoft.minipg.service.pgwireprotocol.server.Response.ReadyForQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class ParsePacket extends AbstractWireProtocolPacket {
     private static final int CHARACTER_TAG_START = 0;
     private static final int LENGTH_START = CHARACTER_TAG_START + 1;

@@ -20,8 +20,10 @@ import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class PgRewindPacket extends AbstractWireProtocolPacket {
 //	private static final String SCRIPT = "./cmds/rewind.sh";
 	private static final String PG_REWIND = "-- pg_rewind";
