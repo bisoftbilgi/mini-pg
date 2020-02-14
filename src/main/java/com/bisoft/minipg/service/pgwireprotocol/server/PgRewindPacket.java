@@ -1,11 +1,14 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
+import com.bisoft.minipg.service.util.ByteUtil;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -117,5 +120,24 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 		}
 		return hostname;
 	}
-
+//
+//	public String getPayloadString(byte[] payload) {
+//
+//		return new String(decodeBuff(payload), StandardCharsets.UTF_8);
+//	}
+//
+//	public byte[] decodeBuff(byte[] buffer) {
+//
+//		this.characterTag = (char) buffer[0];
+//		byte[] lengthBuffer = Arrays.copyOfRange(buffer, 1, 5);
+//		int    payloadStart = 5;
+//		int    payloadEnd   = buffer.length - 1;
+//		if (characterTag == 0) {
+//			lengthBuffer = Arrays.copyOfRange(buffer, 0, 4);
+//			payloadStart = 4;
+//			payloadEnd = buffer.length;
+//		}
+//		this.length = ByteUtil.fromByteArray(lengthBuffer);
+//		return payload = Arrays.copyOfRange(buffer, payloadStart, payloadEnd);
+// 	}
 }

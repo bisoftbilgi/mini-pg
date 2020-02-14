@@ -3,6 +3,7 @@ package com.bisoft.minipg.service.pgwireprotocol.server;
 import com.bisoft.minipg.service.util.ByteUtil;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import org.springframework.stereotype.Component;
 
 /**
  * AbstractWireProtocolPacket

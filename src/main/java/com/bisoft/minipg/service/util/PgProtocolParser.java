@@ -48,7 +48,7 @@ public class PgProtocolParser {
             resultType = ParsePacket.class;
         }
 
-        return ((AbstractWireProtocolPacket) contextWrapper.createBean(resultType)).decode(buffer);
+        return ((AbstractWireProtocolPacket) contextWrapper.createBean(resultType)).decodeBuffer(buffer);
 
     }
 
