@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.CommandExecutor;
+import com.bisoft.minipg.service.util.CommandExecutor;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
@@ -53,7 +52,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 				+ " --target-pgdata=" + ConfigurationService.GetValue("minipg.postgres_data_path")
 				+ " --source-server=\"host=" + pgRewindMasterIp + "\"";
 		log.info("EXECUTING THIS COMMAND for REWINDING===> " + rewindCommand);
-		List<String> cellValues = (new CommandExecutor()).executeCommand(
+		List<String> cellValues = (new CommandExecutor()).executeCommandSync(
 				ConfigurationService.GetValue("minipg.postgres_bin_path") + "pg_rewind",
 				" --target-pgdata=" + ConfigurationService.GetValue("minipg.postgres_data_path"),
 				" --source-server=\"host=" + pgRewindMasterIp + "\"");

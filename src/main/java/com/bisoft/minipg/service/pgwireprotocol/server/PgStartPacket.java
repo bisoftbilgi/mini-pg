@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.CommandExecutor;
+import com.bisoft.minipg.service.util.CommandExecutor;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
