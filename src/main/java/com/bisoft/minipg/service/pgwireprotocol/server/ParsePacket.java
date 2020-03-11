@@ -9,13 +9,14 @@ import com.bisoft.minipg.service.pgwireprotocol.server.Response.ReadyForQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class ParsePacket extends AbstractWireProtocolPacket {
     private static final int CHARACTER_TAG_START = 0;
     private static final int LENGTH_START = CHARACTER_TAG_START + 1;
     private static final int NAME_START = LENGTH_START + 4;
-    public static final Logger logger = LoggerFactory.getLogger(ParsePacket.class);
 
     private String name = "";
     private String queryString = "";
@@ -34,9 +35,9 @@ public class ParsePacket extends AbstractWireProtocolPacket {
         if (index + 1 < packetLength) {
             this.lengthParameterDataTypes = Util.readInt16(buffer, index);
             this.parameterDataTypes = Util.readInt32Array(buffer, index + 2, lengthParameterDataTypes);
+            log.warn("unknown command? you should look at this:", this.toString());
             log.trace(this.toString());
         }
-
         return this;
     }
 
@@ -45,6 +46,7 @@ public class ParsePacket extends AbstractWireProtocolPacket {
         byte[] result = Util.concatByteArray((new ParseComplete()).generateMessage(),
                 (new BindComplete()).generateMessage());
         result = handleJdbcPacket(result);
+
         result = Util.concatByteArray(result, (new ReadyForQuery('I')).generateMessage());
         return result;
     }

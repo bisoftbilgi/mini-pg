@@ -1,78 +1,66 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
-import java.util.Arrays;
-
+import com.bisoft.minipg.service.pgwireprotocol.Util;
 import com.bisoft.minipg.service.util.ByteUtil;
-
+import java.util.Arrays;
+import java.util.Random;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Data
+@Component
 public class StartupPacket extends AbstractWireProtocolPacket {
-	public static final Logger logger = LoggerFactory.getLogger(StartupPacket.class);
-	String remoteHost;
-	int remotePort;
-	Object msg;
-	String connectionString;
 
-	public String getConnectionString() {
-		return connectionString;
-	}
+    private int protocolVersionNumber;
 
-	public void setConnectionString(String connectionString) {
-		this.connectionString = connectionString;
-	}
+    private String remoteHost;
+    private int    remotePort;
+    private String dbName;
+    private String userName;
+    private byte[] salt;
 
-	public Object getMsg() {
-		return msg;
-	}
+    public StartupPacket() {
 
-	public void setMsg(Object message) {
-		this.msg = message;
-	}
+        super();
+        salt = new byte[4];
+        new Random().nextBytes(salt);
+    }
 
-	public String getRemoteHost() {
-		return remoteHost;
-	}
+    @Override
+    public String toString() {
 
-	public void setRemoteHost(String remoteHost) {
-		this.remoteHost = remoteHost;
-	}
+        return remoteHost + ":" + remotePort;
+    }
 
-	public int getRemotePort() {
-		return remotePort;
-	}
+    @Override
+    public WireProtocolPacket decode(byte[] buffer) {
 
-	public void setRemotePort(int remotePort) {
-		this.remotePort = remotePort;
-	}
+        log.trace(
+            "this is a startup pack... that includes: ...b....user.postgres.database.northwind.client_encoding.UTF8.DateStyle.ISO.extra_float_digits."
+                + "=======================");
+        int packetLengt = ByteUtil.fromByteArray(buffer);
 
-	@Override
-	public String toString() {
-		return remoteHost + ":" + remotePort;
-	}
+        String params = new String(Arrays.copyOfRange(buffer, 12, packetLengt - 2));
+        log.trace("length:" + params);
 
-	@Override
-	public WireProtocolPacket decode(byte[] buffer) {
+        return this;
+    }
 
-		log.trace(
-				"this is a startup pack... that includes: ...b....user.postgres.database.northwind.client_encoding.UTF8.DateStyle.ISO.extra_float_digits."
-						+ "=======================");
-		int packetLengt = ByteUtil.fromByteArray(buffer);
+    @Override
+    public byte[] response() {
 
-		String params = new String(Arrays.copyOfRange(buffer, 12, packetLengt - 2));
-		log.trace("length:" + params);
-		setConnectionString(params);
-		return this;
-	}
+        byte[] result = new byte[]{0x52, 0x00, 0x00, 0x00, 0x0c, 0x00,
+            0x00, 0x00, 0x05};
 
-	@Override
-	public byte[] response() {
-		return PgConstants.R_AUTHENTICATION_MD5_PASSWORD;
-	}
+        // R........D...
+        return Util.concatByteArray(result, salt);
+    }
 
-	public static boolean packetMatches(byte[] buffer) {
-		return buffer.length > 8 && buffer[5] == 3 && buffer[7] == 0; // protocol 3.0
-	}
+    public static boolean packetMatches(byte[] buffer) {
+
+        return buffer.length > 8 && buffer[5] == 3 && buffer[7] == 0;
+        // protocol 3.0
+    }
 }

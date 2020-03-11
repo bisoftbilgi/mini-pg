@@ -1,9 +1,13 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
+import org.springframework.stereotype.Component;
+
 /**
  * WireProtocolPacket
  */
+@Component
 public interface WireProtocolPacket {
+
     Character getCharacterTag();
 
     int getLength();

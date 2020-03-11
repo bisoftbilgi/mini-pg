@@ -1,12 +1,10 @@
 package com.bisoft.minipg.service.handler;
 
+import com.bisoft.minipg.service.SessionState;
+import com.bisoft.minipg.service.pgwireprotocol.server.PasswordPacket;
+import com.bisoft.minipg.service.pgwireprotocol.server.StartupPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
 import com.bisoft.minipg.service.util.ByteUtil;
-
-import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -14,81 +12,123 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
+@Scope("prototype")
 public class MiniPGFrontendHandler extends ChannelInboundHandlerAdapter {
 
-	public static final Logger logger = LoggerFactory.getLogger(MiniPGFrontendHandler.class);
-	private Channel outboundChannel;
-	ChannelFuture channelFuture;
+    private Channel outboundChannel;
+    ChannelFuture channelFuture;
 
-	@Override
-	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-		log.debug("handlerRemoved: {}", ctx);
-	}
+    private boolean isAuthenticated;
 
-	@Override
-	public void channelActive(ChannelHandlerContext ctx) {
-		log.info("channelActive :" + ctx);
-		ctx.read();
-	}
+    @Autowired
+    private SessionState sessionState;
 
-	@Override
-	public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
-		log.debug("channelRead   {} {}", msg, ctx);
-		if (msg instanceof WireProtocolPacket) {
-			WireProtocolPacket wireProtocolPacket = (WireProtocolPacket) msg;
-			byte[] response = wireProtocolPacket.response();
-			sendBytesAndAddListener(ctx, response);
+    @Override
+    public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
 
-		} else if (msg instanceof ByteBuf) {
-			String strMessage = ByteUtil.byteArrayToHexAndAsciiAndDecDump(ByteUtil.decodeAsBytes((ByteBuf) msg));
-			log.trace("channelRead  ByteBuf {} \n{}", ctx, strMessage);
-			handleByteBuf(ctx, msg);
-		} else
-			throw new Exception("Unknown package type.");
-	}
+        log.debug("handlerRemoved: {}", ctx);
+    }
 
-	private void sendBytesAndAddListener(final ChannelHandlerContext ctx, final byte[] response) {
-		String strResponse = ByteUtil.byteArrayToHexAndAsciiAndDecDumpWithTab(response);
-		log.trace("sendBytesAndAddListener : \n{}", strResponse);
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) {
 
-		ByteBuf buffer = Unpooled.copiedBuffer(response);
-		Channel channel = ctx.channel();
-		ChannelFuture channelFuture = channel.writeAndFlush(buffer);
+        log.info("channelActive :" + ctx);
+        ctx.read();
+    }
 
-		channelFuture.addListener((ChannelFutureListener) (future) -> {
-			log.debug("sendBytesAndAddListener listener success:" + future.isSuccess());
-			if (future.isSuccess()) {
-				channel.read();
-			} else {
-				channel.close();
-			}
-		});
-	}
+    @Override
+    public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
 
-	private void handleByteBuf(ChannelHandlerContext ctx, Object msg) {
-		log.trace("handleByteBuf " + msg);
-	}
+        log.debug("channelRead   {} {}", msg, ctx);
+        if (msg instanceof WireProtocolPacket) {
+            WireProtocolPacket wireProtocolPacket = (WireProtocolPacket) msg;
 
-	@Override
-	public void channelInactive(ChannelHandlerContext ctx) {
-		log.debug("channel incative triggered...");
-		if (outboundChannel != null) {
-			closeOnFlush(outboundChannel);
-		}
-	}
+            // do customization for types
+            checkIfStartupPacketResponse(wireProtocolPacket);
+            checkIfAuthenticationOkResponse(wireProtocolPacket);
 
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		cause.printStackTrace();
-		closeOnFlush(ctx.channel());
-	}
+            // and generate the result
+            byte[] response = wireProtocolPacket.response();
+            // add them to the response channel..
+            sendBytesAndAddListener(ctx, response);
 
-	static void closeOnFlush(Channel ch) {
-		if (ch.isActive()) {
-			ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-		}
-	}
+        } else if (msg instanceof ByteBuf) {
+            String strMessage = ByteUtil.byteArrayToHexAndAsciiAndDecDump(ByteUtil.decodeAsBytes((ByteBuf) msg));
+            log.trace("channelRead  ByteBuf {} \n{}", ctx, strMessage);
+            handleByteBuf(ctx, msg);
+        } else
+            throw new Exception("Unknown package type.");
+    }
 
+    private void sendBytesAndAddListener(final ChannelHandlerContext ctx, final byte[] response) {
+
+        String strResponse = ByteUtil.byteArrayToHexAndAsciiAndDecDumpWithTab(response);
+        log.trace("sendBytesAndAddListener : \n{}", strResponse);
+
+        ByteBuf       buffer        = Unpooled.copiedBuffer(response);
+        Channel       channel       = ctx.channel();
+        ChannelFuture channelFuture = channel.writeAndFlush(buffer);
+
+        channelFuture.addListener((ChannelFutureListener) (future) -> {
+            log.debug("sendBytesAndAddListener listener success:" + future.isSuccess());
+            if (future.isSuccess()) {
+                channel.read();
+            } else {
+                channel.close();
+            }
+        });
+    }
+
+    private void handleByteBuf(ChannelHandlerContext ctx, Object msg) {
+
+        log.trace("handleByteBuf " + msg);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+
+        log.debug("channel incative triggered...");
+        if (outboundChannel != null) {
+            closeOnFlush(outboundChannel);
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+
+        cause.printStackTrace();
+        closeOnFlush(ctx.channel());
+    }
+
+    static void closeOnFlush(Channel ch) {
+
+        if (ch.isActive()) {
+            ch.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
+    private void checkIfStartupPacketResponse(WireProtocolPacket wireProtocolPacket) {
+
+        if (wireProtocolPacket instanceof StartupPacket) {
+            StartupPacket packet = (StartupPacket) wireProtocolPacket;
+            this.sessionState.setDbName(packet.getDbName());
+            this.sessionState.setUserName(packet.getUserName());
+            this.sessionState.setSalt(packet.getSalt());
+        }
+    }
+
+    private void checkIfAuthenticationOkResponse(WireProtocolPacket wireProtocolPacket) {
+
+        if (wireProtocolPacket instanceof PasswordPacket) {
+            PasswordPacket passwordPacket = (PasswordPacket) wireProtocolPacket;
+            passwordPacket.setSessionState(this.sessionState);
+        }
+    }
 }

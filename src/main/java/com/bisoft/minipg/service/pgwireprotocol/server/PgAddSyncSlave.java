@@ -1,7 +1,7 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.CommandExecutor;
+import com.bisoft.minipg.service.util.CommandExecutor;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
@@ -18,8 +18,10 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class PgAddSyncSlave extends AbstractWireProtocolPacket {
 
     private static final String PG_ADD_SYNC_SLAVE = "-- pg_add_sync_slave";
