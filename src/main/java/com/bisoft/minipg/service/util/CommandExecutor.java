@@ -36,9 +36,11 @@ public class CommandExecutor {
         // Run a shell command
         processBuilder.command("bash", "-c", String.join(" ", args));
 
-        for (String string : args) {
-            log.info("executing:" + string);
-        }
+        System.out.println("executing: bash -c "+ String.join(" ", args));
+//
+//        for (String string : args) {
+//            log.info("executing:" + string);
+//        }
         List<String> cellValues = new ArrayList<>();
         try {
             Process process = processBuilder.start();
