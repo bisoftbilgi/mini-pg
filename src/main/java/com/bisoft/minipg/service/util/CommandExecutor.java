@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,10 +34,15 @@ public class CommandExecutor {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
-        // Run a shell command
-        processBuilder.command(String.join(" ", args));
+       List<String> command=new ArrayList<>();
+       command.add("/user/bin/bash");
+       command.add("-c");
+        Arrays.stream(args).forEach(i->command.add(i));
 
-        System.out.println("executing:"+ String.join(" ", args));
+        // Run a shell command
+        processBuilder.command(command);
+
+        System.out.println("executing:"+ String.join(" ", command));
 //
 //        for (String string : args) {
 //            log.info("executing:" + string);

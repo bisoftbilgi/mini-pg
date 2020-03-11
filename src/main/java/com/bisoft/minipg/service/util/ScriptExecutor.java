@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -44,11 +45,15 @@ public class ScriptExecutor {
 
 		ProcessBuilder processBuilder = new ProcessBuilder();
 
+		List<String> command=new ArrayList<>();
+		command.add("/user/bin/bash");
+		command.add("-c");
+		Arrays.stream(args).forEach(i->command.add(i));
+
 		// Run a shell command
-		processBuilder.command(String.join(" ", args));
+		processBuilder.command(command);
 
-		System.out.println("executing:"+ String.join(" ", args));
-
+		System.out.println("executing:"+ String.join(" ", command));
 		List<String> cellValues = new ArrayList<>();
 		try {
 			Process process = processBuilder.start();
