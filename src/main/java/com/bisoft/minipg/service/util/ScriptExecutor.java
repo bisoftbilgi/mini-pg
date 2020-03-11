@@ -2,7 +2,6 @@ package com.bisoft.minipg.service.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,26 +11,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ScriptExecutor {
 
-    public List<String> executeScriptNormal(String... args) {
+    public List<String> executeScript(String... args) {
 
-        for (String string : args) {
-            log.info("executing:" + string);
-        }
+        Process p;
+        log.info("EXECUTING:", String.join(" ", args));
         List<String> cellValues = new ArrayList<>();
         try {
-            ProcessBuilder builder = new ProcessBuilder(args);
-            builder.redirectErrorStream(true);
-
-            Process        process = builder.start();
-            InputStream    is      = process.getInputStream();
-            BufferedReader reader  = new BufferedReader(new InputStreamReader(is));
-
+            p = Runtime.getRuntime().exec(args);
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(p.getInputStream()));
             String line = null;
-            while ((line = reader.readLine()) != null) {
-                log.trace(line);
+
+            while ((line = in.readLine()) != null) {
+                log.debug(line);
                 cellValues.add(line);
             }
 
+            log.info("COMMAND OUTPUT:" + String.join("\n", cellValues));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -40,7 +36,7 @@ public class ScriptExecutor {
     }
 
     //TODO: give a try to processBuilder...
-    public List<String> executeScript(String... args) {
+    public List<String> executeScriptAlter(String... args) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
@@ -62,11 +58,13 @@ public class ScriptExecutor {
                 new InputStreamReader(process.getInputStream()));
 
             String line;
+
             while ((line = reader.readLine()) != null) {
                 cellValues.add(line);
             }
 
             int exitVal = process.waitFor();
+
             if (exitVal == 0) {
                 System.out.println("Success!");
                 System.out.println(cellValues);

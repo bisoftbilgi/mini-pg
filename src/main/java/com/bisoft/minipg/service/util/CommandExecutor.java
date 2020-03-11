@@ -13,14 +13,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class CommandExecutor {
 
-    public List<String> executeCommandByRuntime(String... args) {
+    public List<String> executeCommand(String... args) {
 
-        for (String string : args) {
-            log.info("executing:" + string);
-        }
+        Process p;
+        log.info("EXECUTING:", String.join(" ", args));
         List<String> cellValues = new ArrayList<>();
         try {
-            Runtime.getRuntime().exec(args);
+            p = Runtime.getRuntime().exec(args);
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(p.getInputStream()));
+            String line = null;
+
+            while ((line = in.readLine()) != null) {
+                log.debug(line);
+                cellValues.add(line);
+            }
+
+            log.info("COMMAND OUTPUT:" + String.join("\n", cellValues));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -29,7 +38,7 @@ public class CommandExecutor {
     }
 
     //TODO: give a try to processBuilder...
-    public List<String> executeCommand(String... args) {
+    public List<String> executeCommandAlter(String... args) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
