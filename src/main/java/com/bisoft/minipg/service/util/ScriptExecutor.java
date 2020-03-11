@@ -7,80 +7,79 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ScriptExecutor {
- 
-	public List<String> executeScriptNormal(String... args) {
-		for (String string : args) {
-			log.info("executing:" + string);
-		}
-		List<String> cellValues = new ArrayList<>();
-		try {
-			ProcessBuilder builder = new ProcessBuilder(args);
-			builder.redirectErrorStream(true);
 
-			Process process = builder.start();
-			InputStream is = process.getInputStream();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+    public List<String> executeScriptNormal(String... args) {
 
-			String line = null;
-			while ((line = reader.readLine()) != null) {
-				log.trace(line);
-				cellValues.add(line);
-			}
+        for (String string : args) {
+            log.info("executing:" + string);
+        }
+        List<String> cellValues = new ArrayList<>();
+        try {
+            ProcessBuilder builder = new ProcessBuilder(args);
+            builder.redirectErrorStream(true);
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+            Process        process = builder.start();
+            InputStream    is      = process.getInputStream();
+            BufferedReader reader  = new BufferedReader(new InputStreamReader(is));
 
-		return cellValues;
-	}
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                log.trace(line);
+                cellValues.add(line);
+            }
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-	//TODO: give a try to processBuilder...
-	public List<String> executeScript(String... args) {
+        return cellValues;
+    }
 
-		ProcessBuilder processBuilder = new ProcessBuilder();
+    //TODO: give a try to processBuilder...
+    public List<String> executeScript(String... args) {
 
-		List<String> command=new ArrayList<>();
-		command.add("/usr/bin/bash");
-		command.add("-c");
-		Arrays.stream(args).forEach(i->command.add(i));
+        ProcessBuilder processBuilder = new ProcessBuilder();
 
-		// Run a shell command
-		processBuilder.command(command);
+        List<String> command = new ArrayList<>();
+        command.add("bash");
+        command.add("-c");
+        Arrays.stream(args).forEach(i -> command.add(i));
 
-		System.out.println("executing:"+ String.join(" ", command));
-		List<String> cellValues = new ArrayList<>();
-		try {
-			Process process = processBuilder.start();
+        // Run a shell command
+        processBuilder.command(command);
 
-			StringBuilder output = new StringBuilder();
-			BufferedReader reader = new BufferedReader(
-				new InputStreamReader(process.getInputStream()));
+        System.out.println("executing:" + String.join(" ", command));
+        List<String> cellValues = new ArrayList<>();
+        try {
+            Process process = processBuilder.start();
 
-			String line;
-			while ((line = reader.readLine()) != null) {
-				cellValues.add(line);
-			}
+            StringBuilder output = new StringBuilder();
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
 
-			int exitVal = process.waitFor();
-			if (exitVal == 0) {
-				System.out.println("Success!");
-				System.out.println(cellValues);
-				System.exit(0);
-			} else {
-				System.out.println("ERROR:");
-			}
+            String line;
+            while ((line = reader.readLine()) != null) {
+                cellValues.add(line);
+            }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+            int exitVal = process.waitFor();
+            if (exitVal == 0) {
+                System.out.println("Success!");
+                System.out.println(cellValues);
+                System.exit(0);
+            } else {
+                System.out.println("unsuccessfull:" + cellValues);
+            }
 
-		return cellValues;
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return cellValues;
+    }
 
 }

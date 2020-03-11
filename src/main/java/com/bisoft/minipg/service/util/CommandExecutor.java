@@ -28,21 +28,20 @@ public class CommandExecutor {
         return cellValues;
     }
 
-
     //TODO: give a try to processBuilder...
     public List<String> executeCommand(String... args) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
-       List<String> command=new ArrayList<>();
-       command.add("/usr/bin/bash");
-       command.add("-c");
-        Arrays.stream(args).forEach(i->command.add(i));
+        List<String> command = new ArrayList<>();
+        command.add("bash");
+        command.add("-c");
+        Arrays.stream(args).forEach(i -> command.add(i));
 
         // Run a shell command
         processBuilder.command(command);
 
-        System.out.println("executing:"+ String.join(" ", command));
+        System.out.println("executing:" + String.join(" ", command));
 //
 //        for (String string : args) {
 //            log.info("executing:" + string);
@@ -65,8 +64,9 @@ public class CommandExecutor {
                 System.out.println("Success!");
                 System.out.println(cellValues);
                 System.exit(0);
+
             } else {
-                System.out.println("ERROR:");
+                System.out.println("unsuccessfull:" + cellValues);
             }
 
         } catch (Exception e) {
@@ -75,6 +75,7 @@ public class CommandExecutor {
 
         return cellValues;
     }
+
     public List<String> executeCommandSync(String... args) {
 
         for (String string : args) {

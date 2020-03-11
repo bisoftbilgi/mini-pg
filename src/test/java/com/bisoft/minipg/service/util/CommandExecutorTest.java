@@ -17,13 +17,13 @@ class CommandExecutorTest {
          @Test
     public void execute() {
 
-        sut.executeCommand("sleep", "10");
+        sut.executeCommand("ls", "alh");
     }
 
-//        @Test
+        @Test
     public void executeSync() {
 
-        sut.executeCommandSync("sleep", "3");
+        sut.executeCommand("sleep", "3");
     }
 
     @Test
