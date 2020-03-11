@@ -1,7 +1,7 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.ScriptExecuter;
+import com.bisoft.minipg.service.util.ScriptExecutor;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
@@ -24,7 +24,7 @@ public class PgPromotePacket extends AbstractWireProtocolPacket {
     @Override
     public byte[] response() {
 
-        List<String> cellValues = (new ScriptExecuter()).executeScript(
+        List<String> cellValues = (new ScriptExecutor()).executeScript(
             ConfigurationService.GetValue("minipg.postgres_bin_path") + "pg_ctl", "promote",
             "-D" + ConfigurationService.GetValue("minipg.postgres_data_path"));
         cellValues.add(0, PG_COMM_PREFIX + " received.. Command executed at : " + new Date());
