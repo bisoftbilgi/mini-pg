@@ -14,13 +14,13 @@ class CommandExecutorTest {
         this.sut = new CommandExecutor();
     }
 
-    //    @Test
+         @Test
     public void execute() {
 
         sut.executeCommand("sleep", "10");
     }
 
-    //    @Test
+//        @Test
     public void executeSync() {
 
         sut.executeCommandSync("sleep", "3");
@@ -29,7 +29,7 @@ class CommandExecutorTest {
     @Test
     public void executeCommandByProcess() {
 
-        List<String> result = sut.executeCommandByProcess("date");
+        List<String> result = sut.executeCommand("date");
         System.out.println(result);
     }
 }
