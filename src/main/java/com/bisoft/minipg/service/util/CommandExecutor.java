@@ -34,9 +34,9 @@ public class CommandExecutor {
         ProcessBuilder processBuilder = new ProcessBuilder();
 
         // Run a shell command
-        processBuilder.command("bash", "-c", String.join(" ", args));
+        processBuilder.command(String.join(" ", args));
 
-        System.out.println("executing: bash -c "+ String.join(" ", args));
+        System.out.println("executing:"+ String.join(" ", args));
 //
 //        for (String string : args) {
 //            log.info("executing:" + string);
