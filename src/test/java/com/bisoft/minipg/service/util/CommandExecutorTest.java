@@ -17,7 +17,7 @@ class CommandExecutorTest {
          @Test
     public void execute() {
 
-        sut.executeCommand("ls", "alh");
+        sut.executeCommand("ls", "-alh");
     }
 
         @Test

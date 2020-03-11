@@ -17,6 +17,7 @@ public class CommandExecutor {
 
         Process p;
         log.info("EXECUTING:", String.join(" ", args));
+        System.out.println("EXECUTING:" + String.join(" ", args));
         List<String> cellValues = new ArrayList<>();
         try {
             p = Runtime.getRuntime().exec(args);
@@ -27,9 +28,10 @@ public class CommandExecutor {
             while ((line = in.readLine()) != null) {
                 log.debug(line);
                 cellValues.add(line);
+                System.out.println(line);
             }
 
-            log.info("COMMAND OUTPUT:" + String.join("\n", cellValues));
+            System.out.println("COMMAND OUTPUT:" + String.join("\n", cellValues));
         } catch (IOException e) {
             e.printStackTrace();
         }
