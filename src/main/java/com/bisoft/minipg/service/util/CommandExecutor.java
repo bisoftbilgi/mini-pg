@@ -35,7 +35,7 @@ public class CommandExecutor {
         ProcessBuilder processBuilder = new ProcessBuilder();
 
        List<String> command=new ArrayList<>();
-       command.add("/user/bin/bash");
+       command.add("/usr/bin/bash");
        command.add("-c");
         Arrays.stream(args).forEach(i->command.add(i));
 
