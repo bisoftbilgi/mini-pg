@@ -17,9 +17,8 @@ public class ScriptExecutor {
 
     public List<String> executeScript(String... args) {
 
-        for (String string : args) {
-            log.info("executing:" + string);
-        }
+        log.info("EXECUTING:", String.join(" ", args));
+
         List<String> cellValues = new ArrayList<>();
         try {
             ProcessBuilder builder = new ProcessBuilder(args);

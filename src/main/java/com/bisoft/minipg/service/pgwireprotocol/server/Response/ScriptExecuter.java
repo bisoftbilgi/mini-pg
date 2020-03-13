@@ -13,9 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ScriptExecuter {
  
 	public List<String> executeScript(String... args) {
-		for (String string : args) {
-			log.info("executing:" + string);
-		}
+		log.info("EXECUTING:", String.join(" ", args));
 		List<String> cellValues = new ArrayList<>();
 		try {
 			ProcessBuilder builder = new ProcessBuilder(args);
