@@ -6,20 +6,13 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
-@AllArgsConstructor
-public class CommandExecutor {
 
-    @Value("${bfm.binPath}")
-    public String postgresBinPath;
+public class CommandExecutor {
 
     public List<String> executeCommandEx1(String... args) {
 
