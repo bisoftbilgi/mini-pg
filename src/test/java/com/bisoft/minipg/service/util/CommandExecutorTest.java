@@ -14,16 +14,18 @@ class CommandExecutorTest {
         this.sut = new CommandExecutor();
     }
 
-         @Test
+    @Test
     public void execute() {
 
         sut.executeCommand("ls", "-alh");
+        assert true;
     }
 
-        @Test
+    @Test
     public void executeSync() {
 
         sut.executeCommand("sleep", "3");
+        assert true;
     }
 
     @Test
@@ -31,5 +33,7 @@ class CommandExecutorTest {
 
         List<String> result = sut.executeCommand("date");
         System.out.println(result);
+        assert true;
+
     }
 }
