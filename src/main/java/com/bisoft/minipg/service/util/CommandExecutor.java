@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,7 @@ public class CommandExecutor {
     @Value("${bfm.binPath}")
     public String postgresBinPath;
 
-    public List<String> executeCommandEx(String... args) {
+    public List<String> executeCommandEx1(String... args) {
 
         System.out.println("EXECUTING THIS:" + String.join(" ", args));
         log.info("executing:" + String.join(" ", args));
@@ -49,7 +48,7 @@ public class CommandExecutor {
     }
 
     //TODO: give a try to processBuilder...
-    public List<String> executeCommandPs(String... args) {
+    public List<String> executeCommand(String... args) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
@@ -66,7 +65,7 @@ public class CommandExecutor {
         List<String> cellValues = new ArrayList<>();
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
-//            pb.directory(new File("/usr/local/bin/"));
+            pb.directory(new File(System.getProperty("user.home")));
             Process process = pb.start();
             BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getInputStream()));
@@ -110,39 +109,4 @@ public class CommandExecutor {
         return cellValues;
     }
 
-    public List<String> executeCommand(String... args) {
-
-        ProcessBuilder builder   = new ProcessBuilder();
-        Boolean        isWindows = false;
-
-
-        List<String> command = new ArrayList<>();
-//        command.add("/bin/sh");
-//        command.add("-c");
-        Arrays.stream(args).forEach(i -> command.add(i));
-
-
-        System.out.println("executing:" + String.join(" ", command));
-        log.info("executing:" + String.join(" ", command));
-
-
-        if (isWindows) {
-            builder.command("cmd.exe", "/c", "dir");
-        } else {
-            builder.command(args);
-        }
-        builder.directory(new File(System.getProperty("user.home")));
-        int exitCode = 1;
-        try {
-            Process process = builder.start();
-            StreamGobbler streamGobbler =
-                new StreamGobbler(process.getInputStream(), System.out::println);
-            Executors.newSingleThreadExecutor().submit(streamGobbler);
-            exitCode = process.waitFor();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        assert exitCode == 0;
-        return null;
-    }
 }

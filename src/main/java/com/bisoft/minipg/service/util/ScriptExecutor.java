@@ -1,6 +1,7 @@
 package com.bisoft.minipg.service.util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ScriptExecutor {
 
-    public List<String> executeScript(String... args) {
+    public List<String> executeScriptEx(String... args) {
 
         Process p;
         log.info("EXECUTING:", String.join(" ", args));
@@ -36,13 +37,13 @@ public class ScriptExecutor {
     }
 
     //TODO: give a try to processBuilder...
-    public List<String> executeScriptAlter(String... args) {
+    public List<String> executeScript(String... args) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
 
         List<String> command = new ArrayList<>();
-        command.add("bash");
-        command.add("-c");
+//        command.add("bash");
+//        command.add("-c");
         Arrays.stream(args).forEach(i -> command.add(i));
 
         // Run a shell command
@@ -51,9 +52,8 @@ public class ScriptExecutor {
         System.out.println("executing:" + String.join(" ", command));
         List<String> cellValues = new ArrayList<>();
         try {
+            processBuilder.directory(new File(System.getProperty("user.home")));
             Process process = processBuilder.start();
-
-            StringBuilder output = new StringBuilder();
             BufferedReader reader = new BufferedReader(
                 new InputStreamReader(process.getInputStream()));
 
