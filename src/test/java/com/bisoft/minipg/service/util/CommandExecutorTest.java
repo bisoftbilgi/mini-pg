@@ -18,7 +18,7 @@ class CommandExecutorTest {
     @Test
     public void execute() {
 
-        sut.executeCommand("sleep", "10");
+        sut.executeCommand("pg_ctl", "status");
     }
 
 
