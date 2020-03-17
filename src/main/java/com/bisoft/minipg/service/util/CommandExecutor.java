@@ -14,11 +14,6 @@ public class CommandExecutor {
 
     public List<String> executeCommand(String... args) {
 
-        /*
-
-        String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
-String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
-        */
         System.out.println("EXECUTING THIS:" + String.join(" ", args));
         log.info("executing:" + String.join(" ", args));
         Process p;

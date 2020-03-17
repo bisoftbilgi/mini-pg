@@ -17,7 +17,7 @@ class CommandExecutorTest {
 
     @Test
     public void execute() {
-
+//        sut.executeCommand("sudo", "su" ,"-", "postgres");
         sut.executeCommand("pg_ctl", "status");
     }
 
