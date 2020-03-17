@@ -1,4 +1,4 @@
-package com.bisoft.minipg.service.pgwireprotocol.server.Response;
+package com.bisoft.minipg.service.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

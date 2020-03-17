@@ -30,8 +30,8 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
     @Value("${server.postgres_data_path}")
     public String postgresDataPath;
 
-    @Value("${server.postgres_bin_path}")
-    public String postgresBinPath;
+    @Value("${server.pg_ctl_path}")
+    public String pgCtlPath;
 
     @Value("${minipg.os}")
     public String operatingSystem;
@@ -60,13 +60,13 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
         // password=080419"
 
 //		host=192.168.2.90 port=5432 user=postgres 
-        String rewindCommand = postgresBinPath + "pg_rewind"
+        String rewindCommand = pgCtlPath + "pg_rewind"
             + " --target-pgdata=" + postgresDataPath
             + " --source-server=\"host=" + pgRewindMasterIp + "\"";
         log.info("EXECUTING THIS COMMAND for REWINDING===> " + rewindCommand);
 
         List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-            postgresBinPath + "pg_rewind",
+                pgCtlPath + "pg_rewind",
             " --target-pgdata=" + postgresDataPath,
             " --source-server=\"host=" + pgRewindMasterIp + "\"");
 

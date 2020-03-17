@@ -1,7 +1,7 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.ScriptExecuter;
+import com.bisoft.minipg.service.util.ScriptExecuter;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
