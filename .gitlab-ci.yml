@@ -5,7 +5,7 @@ stages:
 
 cache:
   paths:
-    - .m2/repository/
+    - .m3/repository/
     - target/
 
 deploy:
