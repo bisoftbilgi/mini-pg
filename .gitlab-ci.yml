@@ -16,5 +16,5 @@ deploy:
     - mvn clean install
     - ssh  -i /home/gitlab-runner/id_rsa root@165.227.19.96 'su - postgres'
     - scp -i /home/gitlab-runner/id_rsa target/mini-pg-1.4.2-SNAPSHOT.jar root@165.227.19.96:/var/lib/pgsql/minipg/.
-    - ssh  -i /home/gitlab-runner/id_rsa root@165.227.19.96 'pkill -9d -f  mini-pg-1.4.2-SNAPSHOT.jar'
+    - ssh  -i /home/gitlab-runner/id_rsa root@165.227.19.96 'pkill -9d -f   mini-pg-1.4.2-SNAPSHOT.jar -Dspring.config.location=applicaiton.properties'
     - ssh -i /home/gitlab-runner/id_rsa root@165.227.19.96 'nohub java -jar mini-pg-1.4.2-SNAPSHOT.jar -Dspring.config.location=applicaiton.properties &'
