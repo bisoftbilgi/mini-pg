@@ -17,5 +17,5 @@ deploy:
     - ssh /home/gitlab-runner/id_rsa root@165.227.19.96 'su - postgres'
     - ssh /home/gitlab-runner/id_rsa root@165.227.19.96 'mv /var/lib/pgsql/minipg/mini-pg-1.4.2-SNAPSHOT.jar mini-pg-1.4.2-SNAPSHOT.jar.yedek '
     - scp -i /home/gitlab-runner/id_rsa target/* root@165.227.19.96:/var/lib/pgsql/minipg/.'
-    - ssh /home/gitlab-runner/id_rsa root@165.227.19.96 'pkill -9 -f  mini-pg-1.4.2-SNAPSHOT.jar'
+    - ssh /home/gitlab-runner/id_rsa root@165.227.19.96 'pkill -9d -f  mini-pg-1.4.2-SNAPSHOT.jar'
     - ssh /home/gitlab-runner/id_rsa root@165.227.19.96 'java -jar mini-pg-1.4.2-SNAPSHOT.jar -Dspring.config.location=applicaiton.properties'
