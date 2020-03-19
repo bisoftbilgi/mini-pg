@@ -16,7 +16,7 @@ deploy:
     - mvn clean install
     - mv target/*.jar target/mini.jar
     - scp -i /home/gitlab-runner/id_rsa target/mini.jar root@134.209.96.234:/var/lib/pgsql/minipg/.
-    - ssh -i /home/gitlab-runner/id_rsa root@134.209.96.234 /bin/su -c "/var/lib/pgsql/minipg/minipg.sh stop" - postgres
-    - ssh -i /home/gitlab-runner/id_rsa root@134.209.96.234 /bin/su -c "/var/lib/pgsql/minipg/minipg.sh start" - postgres
+    - ssh -i /home/gitlab-runner/id_rsa root@134.209.96.234 '/bin/su -c "/var/lib/pgsql/minipg/minipg.sh stop" - postgres'
+    - ssh -i /home/gitlab-runner/id_rsa root@134.209.96.234 '/bin/su -c "/var/lib/pgsql/minipg/minipg.sh start" - postgres'
 
     
