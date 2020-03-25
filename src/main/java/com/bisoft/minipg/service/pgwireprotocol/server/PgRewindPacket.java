@@ -65,7 +65,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
             + " --source-server=\"host=" + pgRewindMasterIp + "\"";
         log.info("EXECUTING THIS COMMAND for REWINDING===> " + rewindCommand);
 
-        List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+        List<String> cellValues = (new CommandExecutor()).executeCommand(
                 pgCtlPath + "pg_rewind",
             " --target-pgdata=" + postgresDataPath,
             " --source-server=\"host=" + pgRewindMasterIp + "\"");
