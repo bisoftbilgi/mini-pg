@@ -2,8 +2,8 @@ package com.bisoft.minipg.service.pgwireprotocol.server;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
 import com.bisoft.minipg.service.util.CommandExecutor;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
+import com.bisoft.minipg.service.pgwireprotocol.server.response.Table;
+import com.bisoft.minipg.service.pgwireprotocol.server.response.TableHelper;
 import com.bisoft.minipg.service.subservice.ConfigurationService;
 import java.io.File;
 import java.io.FileReader;

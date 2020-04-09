@@ -1,8 +1,10 @@
-package com.bisoft.minipg.service.pgwireprotocol.server;
+package com.bisoft.minipg.service.pgwireprotocol.instruction;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
+import com.bisoft.minipg.service.pgwireprotocol.server.AbstractWireProtocolPacket;
+import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
+import com.bisoft.minipg.service.pgwireprotocol.server.response.Table;
+import com.bisoft.minipg.service.pgwireprotocol.server.response.TableHelper;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

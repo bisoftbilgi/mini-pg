@@ -12,7 +12,6 @@ public class MiniPGApplication implements CommandLineRunner {
  
 	@Autowired
 	MiniPGService minipgService;
- 
 
 	public static void main(String[] args) {
 		SpringApplication.run(MiniPGApplication.class, args);

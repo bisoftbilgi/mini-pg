@@ -1,5 +1,5 @@
 
-package com.bisoft.minipg.service.pgwireprotocol.server.Response;
+package com.bisoft.minipg.service.pgwireprotocol.server.response;
 
 import java.nio.charset.StandardCharsets;
 

@@ -1,21 +1,16 @@
 package com.bisoft.minipg.service.pgwireprotocol.server;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.bisoft.minipg.service.pgwireprotocol.instruction.PgRewindPacket;
 import com.bisoft.minipg.service.util.ByteUtil;
 import com.bisoft.minipg.testutil.PacketHelper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PgRewindPacketTest {
-    private PgRewindPacket sut;
-
+  
     private PacketHelper packetHelper = new PacketHelper();
 
-    @BeforeEach
-    void init() {
-
-        this.sut = new PgRewindPacket();
-    }
+     
 
     @Test
     public void rewindTest() {
