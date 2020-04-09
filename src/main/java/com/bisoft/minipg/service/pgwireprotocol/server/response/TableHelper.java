@@ -1,4 +1,4 @@
-package com.bisoft.minipg.service.pgwireprotocol.server.Response;
+package com.bisoft.minipg.service.pgwireprotocol.server.response;
 
 import java.util.List;
 import java.util.stream.Collectors;

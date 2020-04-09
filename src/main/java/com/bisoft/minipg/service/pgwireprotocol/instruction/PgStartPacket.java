@@ -1,17 +1,22 @@
-package com.bisoft.minipg.service.pgwireprotocol.server;
+package com.bisoft.minipg.service.pgwireprotocol.instruction;
 
+import com.bisoft.minipg.model.MiniPGLocalSettings;
+import com.bisoft.minipg.service.pgwireprotocol.Util;
+import com.bisoft.minipg.service.pgwireprotocol.server.AbstractWireProtocolPacket;
+import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
+import com.bisoft.minipg.service.pgwireprotocol.server.response.Table;
+import com.bisoft.minipg.service.pgwireprotocol.server.response.TableHelper;
+import com.bisoft.minipg.service.util.CommandExecutor;
 import java.util.Date;
 import java.util.List;
-
-import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.util.CommandExecutor;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.Table;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.TableHelper;
-import com.bisoft.minipg.service.subservice.ConfigurationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class PgStartPacket extends AbstractWireProtocolPacket {
+    @Autowired
+    protected MiniPGLocalSettings miniPGlocalSetings;
+    
 	private static final String PG_START = "-- pg_start";
 
 	public WireProtocolPacket decode(byte[] buffer) {
@@ -21,8 +26,8 @@ public class PgStartPacket extends AbstractWireProtocolPacket {
 	@Override
 	public byte[] response() {
 		List<String> cellValues = (new CommandExecutor()).executeCommand(
-				ConfigurationService.GetValue("minipg.postgres_bin_path") + "pg_ctl", "start",
-				"-D" + ConfigurationService.GetValue("minipg.postgres_data_path"));
+		        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+				"-D" + miniPGlocalSetings.getPostgresDataPath());
 		cellValues.add(0, PG_START + " received.. Command executed at : " + new Date());
 		Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
 		return table.generateMessage();

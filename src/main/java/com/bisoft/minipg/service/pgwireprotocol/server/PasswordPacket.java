@@ -2,7 +2,7 @@ package com.bisoft.minipg.service.pgwireprotocol.server;
 
 import com.bisoft.minipg.service.SessionState;
 import com.bisoft.minipg.service.pgwireprotocol.Util;
-import com.bisoft.minipg.service.pgwireprotocol.server.Response.ErrorResponse;
+import com.bisoft.minipg.service.pgwireprotocol.server.response.ErrorResponse;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

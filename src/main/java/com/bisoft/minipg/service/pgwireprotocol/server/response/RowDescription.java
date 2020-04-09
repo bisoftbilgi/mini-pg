@@ -1,4 +1,4 @@
-package com.bisoft.minipg.service.pgwireprotocol.server.Response;
+package com.bisoft.minipg.service.pgwireprotocol.server.response;
 
 import com.bisoft.minipg.service.pgwireprotocol.Util;
 

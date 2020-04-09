@@ -6,7 +6,7 @@
 
 	<groupId>com.bisoft</groupId>
 	<artifactId>mini-pg</artifactId>
-	<version>1.4.2-SNAPSHOT</version>
+	<version>1.6.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>mini-pg</name>
@@ -83,9 +83,24 @@
 			<groupId>com.hazelcast</groupId>
 			<artifactId>hazelcast-spring</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<filtering>true</filtering>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>application.properties</include>
+					<include>embedded_version.properties</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -94,7 +109,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.1</version>
 				<configuration>
 					<useSystemClassLoader>false</useSystemClassLoader>
 				</configuration>
@@ -102,7 +116,6 @@
 
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>2.6</version>
 				<executions>
 					<execution>
 						<id>copy-resources</id>
