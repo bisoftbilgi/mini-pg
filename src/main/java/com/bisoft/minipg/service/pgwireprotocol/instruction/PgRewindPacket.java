@@ -6,7 +6,6 @@ import com.bisoft.minipg.service.pgwireprotocol.server.AbstractWireProtocolPacke
 import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.response.Table;
 import com.bisoft.minipg.service.pgwireprotocol.server.response.TableHelper;
-import com.bisoft.minipg.service.util.CommandExecutor;
 import com.bisoft.minipg.service.util.ScriptExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,13 +54,6 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
         // --source-server="host=192.168.2.90 port=5432 user=postgres dbname=postgres
         // password=080419"
 
-//		host=192.168.2.90 port=5432 user=postgres 
-
-//        List<String> cellValues = (new ScriptExecutor()).executeScriptSync(
-//                miniPGlocalSetings.getPgCtlBinPath() + "pg_rewind",
-//                "--target-pgdata=" + miniPGlocalSetings.getPostgresDataPath(),
-//                "--source-server='host="+pgRewindMasterIp+"'");
-
         List<String> cellValues = (new ScriptExecutor()).executeScriptSync(
                 "bash", "-c",
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_rewind --target-pgdata="
@@ -69,19 +61,6 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
                         + " --source-server='host=" + pgRewindMasterIp + "'");
 
         reGenerateRecoveryConf(pgRewindMasterIp, "5432");
-
-        /*a start and stop */
-        (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                "-D" + miniPGlocalSetings.getPostgresDataPath());
-
-        (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c " + "CHECKPOINT"
-        );
-
-        (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
-                "-D" + miniPGlocalSetings.getPostgresDataPath());
 
         cellValues.add(0, PG_REWIND + " pg_rewind command executed at : " + new Date());
         Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
