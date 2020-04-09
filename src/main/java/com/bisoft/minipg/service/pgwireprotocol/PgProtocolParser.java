@@ -2,6 +2,7 @@ package com.bisoft.minipg.service.pgwireprotocol;
 
 import com.bisoft.minipg.service.pgwireprotocol.instruction.MiniPgStatusPacket;
 import com.bisoft.minipg.service.pgwireprotocol.instruction.MiniPgVersion;
+import com.bisoft.minipg.service.pgwireprotocol.instruction.PgCheckpointPacket;
 import com.bisoft.minipg.service.pgwireprotocol.instruction.PgPromotePacket;
 import com.bisoft.minipg.service.pgwireprotocol.instruction.PgRemoveSyncSlave;
 import com.bisoft.minipg.service.pgwireprotocol.instruction.PgRewindPacket;
@@ -55,6 +56,8 @@ public class PgProtocolParser {
             resultType = PgStopPacket.class;
         } else if (PgPromotePacket.matches(strMessage)) {
             resultType = PgPromotePacket.class;
+        } else if (PgCheckpointPacket.matches(strMessage)) {
+            resultType = PgCheckpointPacket.class;
         } else if (Util.caseInsensitiveContains(strMessage, "version")) {
             resultType = VersionPacket.class;
         } else if (PgAddSyncSlave.matches(strMessage)) {
