@@ -55,7 +55,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
         // --source-server="host=192.168.2.90 port=5432 user=postgres dbname=postgres
         // password=080419"
 
-//		host=192.168.2.90 port=5432 user=postgres 
+//		host=192.168.2.90 port=5432 user=postgres
 
 //        List<String> cellValues = (new ScriptExecutor()).executeScriptSync(
 //                miniPGlocalSetings.getPgCtlBinPath() + "pg_rewind",
@@ -74,10 +74,6 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
         (new CommandExecutor()).executeCommandSync(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
                 "-D" + miniPGlocalSetings.getPostgresDataPath());
-
-        (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c " + "CHECKPOINT"
-        );
 
         (new CommandExecutor()).executeCommandSync(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
