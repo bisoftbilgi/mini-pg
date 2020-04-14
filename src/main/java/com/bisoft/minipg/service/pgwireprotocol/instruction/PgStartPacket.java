@@ -25,7 +25,7 @@ public class PgStartPacket extends AbstractWireProtocolPacket {
 
 	@Override
 	public byte[] response() {
-		List<String> cellValues = (new CommandExecutor()).executeCommand(
+		List<String> cellValues = (new CommandExecutor()).executeCommandSync(
 		        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
 				"-D" + miniPGlocalSetings.getPostgresDataPath());
 		cellValues.add(0, PG_START + " received.. Command executed at : " + new Date());
