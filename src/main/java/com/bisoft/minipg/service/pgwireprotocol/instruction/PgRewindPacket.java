@@ -96,14 +96,16 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
                     + " primary_conninfo = 'user=postgres host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=1 krbsrvname=postgres application_name="
                     + hostName
                     + "'\n"
-                    + " recovery_target_timeline='latest' ";
+                    + " recovery_target_timeline='latest' "
+                    + " restore_command = 'copy \"" + miniPGlocalSetings.getPostgresArchivePath() + " %f\" \"%p\"'";
 
         } else {
             recoveryConfTemplate = "standby_mode ='on'\n"
                     + " primary_conninfo = 'user=postgres host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=1 krbsrvname=postgres target_session_attrs=any application_name="
                     + hostName
                     + "'\n"
-                    + " recovery_target_timeline='latest' ";
+                    + " recovery_target_timeline='latest' "
+                    + " restore_command = 'cp " + miniPGlocalSetings.getPostgresArchivePath() + "%f \"%p\"'";
 
         }
 
