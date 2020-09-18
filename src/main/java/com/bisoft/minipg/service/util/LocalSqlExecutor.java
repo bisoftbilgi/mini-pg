@@ -66,4 +66,28 @@ public class LocalSqlExecutor {
 
     }
 
+//    public List<String> executeLocalSqlReturnList(String sqlString, String localPort, String localUser, String localPassword) {
+//
+//        System.out.println("sql executing:" + sqlString);
+//        log.trace("sql executing:" + sqlString);
+//        List<String> result = new ArrayList<>();
+//
+//        try (Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:" + localPort + "/postgres",
+//            localUser, localPassword)) {
+//            Statement stmt = conn.createStatement();
+//
+//            Class.forName("org.postgresql.Driver");
+//            ResultSet rs = stmt.executeQuery(sqlString);
+//            while (rs.next()) {
+//                result.add(rs.getString(0));
+//            }
+//
+//        } catch (Exception e) {
+//            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+//            System.exit(0);
+//        }
+//
+//        return result;
+//    }
+
 }

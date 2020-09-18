@@ -23,13 +23,14 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
     private final static int PORT_ORDER = 0;
     private final static int USER_ORDER = 1;
     private static final int PASS_ORDER = 2;
+    private static final int IP_ORDER   = 3;
 
     @Autowired
     protected MiniPGLocalSettings miniPGlocalSetings;
 
-    // expected format is: --pg_checkpoint(5432,postgres,080419)
+    // expected format is: --remove_sync_slave(5432,postgres,080419,127.0.0.1)
     // localPort,localUser,localPassword
-    private static final String PG_COMMAND               = "-- pg_checkpoint";
+    private static final String PG_COMMAND               = "-- remove_sync_slave";
     private static final String LOCAL_COMMAND_PARAMETERS = "(?<connParams>.*)";
     private static final String RIGHT_PARANTHESIS        = "[)]";
     private static final String LEFT_PARANTHESIS         = "[(]";
@@ -58,8 +59,8 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
 
         String[] parameters = localCommandParams.split(",");
 
-        (new LocalSqlExecutor()).executeLocalSql("CHECKPOINT", parameters[PORT_ORDER], parameters[USER_ORDER],
-            parameters[PASS_ORDER]);
+        applyRemainingSyncAppNames(parameters);
+
         cellValues.add(0, " checkpoint command executed at : " + new Date());
         Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
         return table.generateMessage();
@@ -70,20 +71,38 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
         return Util.caseInsensitiveContains(messageStr, PG_COMMAND);
     }
 
-    private List<String> selectRemainingSyncAppNames(String removingIp) {
+    private boolean applyRemainingSyncAppNames(String[] commandParameters) {
 
-        List<String> syncAppNames = new ArrayList<>();
+        List<String> syncAppNames = selectRemainingSyncAppNames(commandParameters);
 
-        // SELECT application_name FROM pg_stat_replication WHERE client_addr <> removingIp
+        String setSyncNamesSQL = "ALTER system SET synchronous_standby_names ='" + syncAppNames.toString() + "'";
+        try {
 
-        syncAppNames.add("pg03");
-        return syncAppNames;
+            (new LocalSqlExecutor()).executeLocalSql(setSyncNamesSQL, commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
+                commandParameters[PASS_ORDER]);
+
+            // SELECT pg_rename_conf();
+            (new LocalSqlExecutor()).executeLocalSql("SELECT pg_rename_conf()", commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
+                commandParameters[PASS_ORDER]);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+
     }
 
-    private void applyRemainingSyncAppNames() {
-        // ALTER system SET synchronous_standby_names=syncAppNames.toString();
+    private List<String> selectRemainingSyncAppNames(String[] commandParameters) {
 
-        // SELECT pg_rename_conf();
+        List<String> syncAppNames;
+
+        String           syncAppNamesSQL = "SELECT application_name FROM pg_stat_replication WHERE client_addr <> '" + commandParameters[IP_ORDER] + "'";
+        LocalSqlExecutor executor        = new LocalSqlExecutor();
+        syncAppNames = executor.retrieveLocalSqlResult(syncAppNamesSQL, commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
+            commandParameters[PASS_ORDER]);
+//        syncAppNames.add("pg03");
+//        syncAppNames.add("pg01");
+        return syncAppNames;
     }
 
 }
