@@ -30,7 +30,7 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
 
     // expected format is: --remove_sync_slave(5432,postgres,080419,127.0.0.1)
     // localPort,localUser,localPassword
-    private static final String PG_COMMAND               = "-- remove_sync_slave";
+    private static final String PG_COMMAND               = "-- try-remove_sync_slave";
     private static final String LOCAL_COMMAND_PARAMETERS = "(?<connParams>.*)";
     private static final String RIGHT_PARANTHESIS        = "[)]";
     private static final String LEFT_PARANTHESIS         = "[(]";
