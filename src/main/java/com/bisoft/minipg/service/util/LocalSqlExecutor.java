@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class LocalSqlExecutor {
 
-    private static final String LOCAL_IP = "127.0.0.1";
+//    private static final String LOCAL_IP = "jdbc:postgresql://localhost:";
+    private static final String LOCAL_IP = "jdbc:postgresql://138.68.9.190:";
 
     public List<String> retrieveLocalSqlResult(String sqlString, String localPort, String localUser,
                                                String localPassword) {
@@ -23,7 +24,7 @@ public class LocalSqlExecutor {
 
         List<String> cellValues = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:" + localPort + "/postgres",
+        try (Connection conn = DriverManager.getConnection(LOCAL_IP + localPort + "/postgres",
             localUser, localPassword)) {
             Statement stmt = conn.createStatement();
 
@@ -51,7 +52,7 @@ public class LocalSqlExecutor {
         System.out.println("sql executing:" + sqlString);
         log.trace("sql executing:" + sqlString);
 
-        try (Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:" + localPort + "/postgres",
+        try (Connection conn = DriverManager.getConnection(LOCAL_IP + localPort + "/postgres",
             localUser, localPassword)) {
             Statement stmt = conn.createStatement();
 

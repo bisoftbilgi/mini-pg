@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -61,7 +62,7 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
 
         applyRemainingSyncAppNames(parameters);
 
-        cellValues.add(0, " checkpoint command executed at : " + new Date());
+        cellValues.add(0, "  exclude sync node command executed at : " + new Date());
         Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
         return table.generateMessage();
     }
@@ -75,14 +76,19 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
 
         List<String> syncAppNames = selectRemainingSyncAppNames(commandParameters);
 
-        String setSyncNamesSQL = "ALTER system SET synchronous_standby_names ='" + syncAppNames.toString() + "'";
+        String setSyncNamesSQL = "ALTER system SET synchronous_standby_names ="
+            + syncAppNames.toString()
+            .replace("[", "'")
+            .replace("]", "'")
+            + "";
+
         try {
 
             (new LocalSqlExecutor()).executeLocalSql(setSyncNamesSQL, commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
                 commandParameters[PASS_ORDER]);
 
             // SELECT pg_rename_conf();
-            (new LocalSqlExecutor()).executeLocalSql("SELECT pg_rename_conf()", commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
+            (new LocalSqlExecutor()).retrieveLocalSqlResult("SELECT pg_reload_conf()", commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
                 commandParameters[PASS_ORDER]);
 
         } catch (Exception e) {
@@ -100,9 +106,11 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
         LocalSqlExecutor executor        = new LocalSqlExecutor();
         syncAppNames = executor.retrieveLocalSqlResult(syncAppNamesSQL, commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
             commandParameters[PASS_ORDER]);
-//        syncAppNames.add("pg03");
-//        syncAppNames.add("pg01");
-        return syncAppNames;
+
+        // sometimes naming may need double quote
+        return syncAppNames.stream()
+            .map(a -> "\"" + a + "\"")
+            .collect(Collectors.toList());
     }
 
 }
