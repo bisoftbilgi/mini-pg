@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class LocalSqlExecutor {
 
-//    private static final String LOCAL_IP = "jdbc:postgresql://localhost:";
-    private static final String LOCAL_IP = "jdbc:postgresql://138.68.9.190:";
+    private static final String LOCAL_IP = "jdbc:postgresql://localhost:";
+//    private static final String LOCAL_IP = "jdbc:postgresql://138.68.9.190:";
 
     public List<String> retrieveLocalSqlResult(String sqlString, String localPort, String localUser,
                                                String localPassword) {
