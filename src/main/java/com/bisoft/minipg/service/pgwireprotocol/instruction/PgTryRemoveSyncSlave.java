@@ -24,7 +24,7 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
     private final static int PORT_ORDER = 0;
     private final static int USER_ORDER = 1;
     private static final int PASS_ORDER = 2;
-    private static final int IP_ORDER   = 3;
+//    private static final int IP_ORDER   = 3;
 
     @Autowired
     protected MiniPGLocalSettings miniPGlocalSetings;
@@ -102,15 +102,43 @@ public class PgTryRemoveSyncSlave extends AbstractWireProtocolPacket {
 
         List<String> syncAppNames;
 
-        String           syncAppNamesSQL = "SELECT application_name FROM pg_stat_replication WHERE client_addr <> '" + commandParameters[IP_ORDER] + "'";
+        String           syncAppNamesSQL = "SELECT application_name FROM pg_stat_replication";
         LocalSqlExecutor executor        = new LocalSqlExecutor();
         syncAppNames = executor.retrieveLocalSqlResult(syncAppNamesSQL, commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
             commandParameters[PASS_ORDER]);
 
         // sometimes naming may need double quote
-        return syncAppNames.stream()
+        List<String> existingServers = syncAppNames.stream()
             .map(a -> "\"" + a + "\"")
             .collect(Collectors.toList());
+
+        List<String> allSyncServers = selectAllyncAppNames(commandParameters);
+
+        // TODO: we just need
+        //  allSyncServers  INTERSECT existingServers
+        allSyncServers.retainAll(existingServers);
+        return allSyncServers;
+    }
+
+    // show synchronous_standby_names ;
+
+    private List<String> selectAllyncAppNames(String[] commandParameters) {
+
+        List<String> syncAppNames;
+
+        String           syncAppNamesSQL = "show synchronous_standby_names";
+        LocalSqlExecutor executor        = new LocalSqlExecutor();
+        // TODO: be careful it returns with double quoted already
+        return executor.retrieveLocalSqlResult(syncAppNamesSQL, commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
+            commandParameters[PASS_ORDER]);
+
+//        syncAppNames = executor.retrieveLocalSqlResult(syncAppNamesSQL, commandParameters[PORT_ORDER], commandParameters[USER_ORDER],
+//            commandParameters[PASS_ORDER]);
+//        // sometimes naming may need double quote
+//        return syncAppNames.stream()
+//            .map(a -> a.replace("\"", ""))
+//            .collect(Collectors.toList());
+
     }
 
 }
