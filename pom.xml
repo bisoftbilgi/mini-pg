@@ -6,7 +6,7 @@
 
 	<groupId>com.bisoft</groupId>
 	<artifactId>mini-pg</artifactId>
-	<version>1.8.0-SNAPSHOT</version>
+	<version>1.8.12-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>mini-pg</name>
