@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -76,9 +75,30 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 //                "--target-pgdata=" + miniPGlocalSetings.getPostgresDataPath(),
 //                "--source-server='host="+pgRewindMasterIp+"'");
 
-        List<String> cellValues = new ArrayList<String>();
+        List<String> cellValues;
 
         String[] parameters = localCommandParams.split(",");
+
+        // TODO: server is open now you can get the exact version from the server.
+        PgVersion localVersion = PgVersion.valueOf(miniPGlocalSetings.getPgVersion());
+        if (localVersion == PgVersion.V12X) {
+            try {
+                //step:3  1. touch <data>/standby.signal
+                (new CommandExecutor()).executeCommandSync("touch",
+                    miniPGlocalSetings.getPostgresDataPath() + "standby.signal");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // open
+            (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+            (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
+                "-D" + miniPGlocalSetings.getPostgresDataPath());
+        }
 
         cellValues = (new ScriptExecutor()).executeScriptSync(
             "bash", "-c",
@@ -92,23 +112,23 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
                 + " password=" + parameters[PASS_ORDER]
                 + "'");
 
-        PgVersion localVersion = PgVersion.valueOf(miniPGlocalSetings.getPgVersion());
         // PgVersion localVersion = localSqlExecutor.getPgVersion(parameters[PORT_ORDER], parameters[USER_ORDER], parameters[PASS_ORDER]);
 //        PgVersion localVersion = localSqlExecutor.getPgVersion(parameters[PORT_ORDER], "wentsy", "wentsy123");
 //        localVersion = PgVersion.V12X;
-        if (localVersion == PgVersion.V12X || localVersion == PgVersion.V11X) {
+        if (localVersion == PgVersion.V12X ) {
             reGenerateRecoveryConfByExecutingStatement(parameters);
         } else {
             reGenerateRecoveryConfByEditingConfFile(parameters);
-        }
-        /*a start and stop */
-        (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-            "-D" + miniPGlocalSetings.getPostgresDataPath());
+            /*a start and stop */
+            (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                "-D" + miniPGlocalSetings.getPostgresDataPath());
 
-        (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
-            "-D" + miniPGlocalSetings.getPostgresDataPath());
+            (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
+                "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+        }
 
         cellValues.add(0, PG_COMMAND + " pg_rewind command executed at : " + new Date());
         Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
@@ -154,6 +174,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
             (new CommandExecutor()).executeCommandSync("touch",
                 miniPGlocalSetings.getPostgresDataPath() + "standby.signal");
 
+
             //step 4:  2. start the server
             (new CommandExecutor()).executeCommandSync(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
@@ -163,6 +184,15 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
             localSqlExecutor.executeLocalSql(recoveryConfSql, parameters[PORT_ORDER], parameters[USER_ORDER], parameters[PASS_ORDER]);
             // 4. reload conf
             localSqlExecutor.executeLocalSql("SELECT pg_reload_conf()", parameters[PORT_ORDER], parameters[USER_ORDER], parameters[PASS_ORDER]);
+            //step 4-a:  2. start the server
+            (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
+                "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+            //step:3  1. touch <data>/standby.signal
+            (new CommandExecutor()).executeCommandSync("touch",
+                miniPGlocalSetings.getPostgresDataPath() + "recovery.signal");
+
 
         } catch (Exception e) {
             e.printStackTrace();
