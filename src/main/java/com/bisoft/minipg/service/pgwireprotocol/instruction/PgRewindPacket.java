@@ -174,6 +174,10 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
             (new CommandExecutor()).executeCommandSync("touch",
                 miniPGlocalSetings.getPostgresDataPath() + "standby.signal");
 
+            //step:3  1. touch <data>/standby.signal
+            (new CommandExecutor()).executeCommandSync("touch",
+                miniPGlocalSetings.getPostgresDataPath() + "recovery.signal");
+
 
             //step 4:  2. start the server
             (new CommandExecutor()).executeCommandSync(
@@ -182,6 +186,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 
             //step 5:  3. execute sql
             localSqlExecutor.executeLocalSql(recoveryConfSql, parameters[PORT_ORDER], parameters[USER_ORDER], parameters[PASS_ORDER]);
+
             // 4. reload conf
             localSqlExecutor.executeLocalSql("SELECT pg_reload_conf()", parameters[PORT_ORDER], parameters[USER_ORDER], parameters[PASS_ORDER]);
             //step 4-a:  2. start the server
@@ -189,9 +194,6 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
                 "-D" + miniPGlocalSetings.getPostgresDataPath());
 
-            //step:3  1. touch <data>/standby.signal
-            (new CommandExecutor()).executeCommandSync("touch",
-                miniPGlocalSetings.getPostgresDataPath() + "recovery.signal");
 
 
         } catch (Exception e) {
