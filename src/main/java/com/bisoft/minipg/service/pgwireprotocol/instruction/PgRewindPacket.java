@@ -3,6 +3,7 @@ package com.bisoft.minipg.service.pgwireprotocol.instruction;
 import com.bisoft.minipg.model.MiniPGLocalSettings;
 import com.bisoft.minipg.model.PgVersion;
 import com.bisoft.minipg.service.pgwireprotocol.Util;
+import com.bisoft.minipg.service.pgwireprotocol.instruction.util.InstructionUtil;
 import com.bisoft.minipg.service.pgwireprotocol.server.AbstractWireProtocolPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.WireProtocolPacket;
 import com.bisoft.minipg.service.pgwireprotocol.server.response.Table;
@@ -15,10 +16,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +30,9 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 
     @Autowired
     protected MiniPGLocalSettings miniPGlocalSetings;
+
+    @Autowired
+    private InstructionUtil instructionUtil;
 
     @Autowired
     private LocalSqlExecutor localSqlExecutor;
@@ -115,7 +117,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
         // PgVersion localVersion = localSqlExecutor.getPgVersion(parameters[PORT_ORDER], parameters[USER_ORDER], parameters[PASS_ORDER]);
 //        PgVersion localVersion = localSqlExecutor.getPgVersion(parameters[PORT_ORDER], "wentsy", "wentsy123");
 //        localVersion = PgVersion.V12X;
-        if (localVersion == PgVersion.V12X ) {
+        if (localVersion == PgVersion.V12X) {
             reGenerateRecoveryConfByExecutingStatement(parameters);
         } else {
             reGenerateRecoveryConfByEditingConfFile(parameters);
@@ -164,7 +166,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
     private boolean reGenerateRecoveryConfByExecutingStatement(String[] parameters) {
 
         log.info("REGENERATING recovery.conf with " + parameters[MASTER_IP_ORDER] + ":" + parameters[PORT_ORDER]);
-        String recoveryConfTemplate = getRecoveryConfTemplateV12();
+        String recoveryConfTemplate = instructionUtil.getRecoveryConfTemplateV12();
         String recoveryConfSql = "alter system set "
             + recoveryConfTemplate.replace("{MASTER_IP}", parameters[MASTER_IP_ORDER]).replace("{MASTER_PORT}", parameters[PORT_ORDER]);
 //        PgVersion localVersion = localSqlExecutor.getPgVersion(parameters[PORT_ORDER], parameters[USER_ORDER], parameters[PASS_ORDER]);
@@ -177,7 +179,6 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
             //step:3  1. touch <data>/standby.signal
             (new CommandExecutor()).executeCommandSync("touch",
                 miniPGlocalSetings.getPostgresDataPath() + "recovery.signal");
-
 
             //step 4:  2. start the server
             (new CommandExecutor()).executeCommandSync(
@@ -194,8 +195,6 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
                 "-D" + miniPGlocalSetings.getPostgresDataPath());
 
-
-
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -205,37 +204,14 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
     }
 
     private String getRecoveryConfTemplate() {
-        // --source-server="host=192.168.2.90 port=5432 user=postgres dbname=postgres password=080419"
-        String recoveryConfTemplate = null;
-        String hostName             = getHostName();
+
         if (miniPGlocalSetings.getOs().startsWith("windows")) {
-            recoveryConfTemplate = "standby_mode ='on'\n"
-                + " primary_conninfo = 'user=postgres host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=1 krbsrvname=postgres application_name="
-                + hostName
-                + "'\n"
-                + " recovery_target_timeline='latest' ";
 
+            return instructionUtil.getRecoveryConfTemplateForWindows();
         } else {
-            recoveryConfTemplate = "standby_mode ='on'\n"
-                + " primary_conninfo = 'user=postgres host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=1 krbsrvname=postgres target_session_attrs=any application_name="
-                + hostName
-                + "'\n"
-                + " recovery_target_timeline='latest' ";
-
+            return instructionUtil.getRecovertConfTemplateForLinux();
         }
-        return recoveryConfTemplate;
-    }
 
-    private String getRecoveryConfTemplateV12() {
-        // --source-server="host=192.168.2.90 port=5432 user=postgres dbname=postgres password=080419"
-        String recoveryConfTemplate = null;
-        String hostName             = getHostName();
-
-        recoveryConfTemplate = " primary_conninfo ='user=postgres passfile=''/var/lib/pgsql/.pgpass'' host={MASTER_IP} port={MASTER_PORT} sslmode=prefer sslcompression=0 krbsrvname=postgres target_session_attrs=any application_name="
-            + hostName
-            + "'";
-
-        return recoveryConfTemplate;
     }
 
     public static boolean matches(String messageStr) {
@@ -243,18 +219,4 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
         return Util.caseInsensitiveContains(messageStr, PG_COMMAND);
     }
 
-    private String getHostName() {
-
-        InetAddress ip;
-        String      hostname = UUID.randomUUID().toString();
-        try {
-            ip = InetAddress.getLocalHost();
-            hostname = ip.getHostName();
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-        }
-        return hostname;
-    }
 }
