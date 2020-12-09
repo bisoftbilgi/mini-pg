@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -78,8 +79,26 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 //                "--source-server='host="+pgRewindMasterIp+"'");
 
         List<String> cellValues;
+        cellValues = doRewind();
+        // return exceptional result
 
-        String[] parameters = localCommandParams.split(",");
+        if (cellValues == null) {
+            cellValues = new ArrayList<>();
+            cellValues.add(0, "false");
+            Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
+            return table.generateMessage();
+        }
+        cellValues.add(0, "true");
+        cellValues.add(0, PG_COMMAND + " pg_rewind command executed at : " + new Date());
+        Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
+        return table.generateMessage();
+
+    }
+
+    private List<String> doRewind() {
+
+        final List<String> cellValues;
+        String[]           parameters = localCommandParams.split(",");
 
         // TODO: server is open now you can get the exact version from the server.
         PgVersion localVersion = PgVersion.valueOf(miniPGlocalSetings.getPgVersion());
@@ -93,9 +112,20 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
             }
 
             // open
-            (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                "-D" + miniPGlocalSetings.getPostgresDataPath());
+            boolean result = false;
+            /*a start and stop */
+            List<String> interResult =
+                (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
+            for (String cell : interResult) {
+                if (cell.contains("done")) {
+                    result = true;
+                    break;
+                }
+            }
+            if (!result)
+                return null;
 
             (new CommandExecutor()).executeCommandSync(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
@@ -132,9 +162,7 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 
         }
 
-        cellValues.add(0, PG_COMMAND + " pg_rewind command executed at : " + new Date());
-        Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
-        return table.generateMessage();
+        return cellValues;
     }
 
     // @Deprecated
