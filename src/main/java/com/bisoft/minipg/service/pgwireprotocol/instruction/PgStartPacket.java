@@ -14,26 +14,43 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PgStartPacket extends AbstractWireProtocolPacket {
+
     @Autowired
     protected MiniPGLocalSettings miniPGlocalSetings;
-    
-	private static final String PG_START = "-- pg_start";
 
-	public WireProtocolPacket decode(byte[] buffer) {
-		return this;
-	}
+    private static final String PG_START = "-- pg_start";
 
-	@Override
-	public byte[] response() {
-		List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-		        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-				"-D" + miniPGlocalSetings.getPostgresDataPath());
-		cellValues.add(0, PG_START + " received.. Command executed at : " + new Date());
-		Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
-		return table.generateMessage();
-	}
+    public WireProtocolPacket decode(byte[] buffer) {
 
-	public static boolean matches(String messageStr) {
-		return Util.caseInsensitiveContains(messageStr, PG_START);
-	}
+        return this;
+    }
+
+    @Override
+    public byte[] response() {
+
+        boolean      result     = false;
+        List<String> cellValues = doStart();
+        for (String cell : cellValues) {
+            if (cell.contains("done")) {
+                result = true;
+                break;
+            }
+        }
+        cellValues.add(0, "true");
+        cellValues.add(0, PG_START + " received.. Command executed at : " + new Date());
+        Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
+        return table.generateMessage();
+    }
+
+    private List<String> doStart() {
+
+        return (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+            "-D" + miniPGlocalSetings.getPostgresDataPath());
+    }
+
+    public static boolean matches(String messageStr) {
+
+        return Util.caseInsensitiveContains(messageStr, PG_START);
+    }
 }

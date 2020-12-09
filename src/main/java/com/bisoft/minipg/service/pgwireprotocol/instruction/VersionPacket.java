@@ -17,21 +17,21 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class VersionPacket extends AbstractWireProtocolPacket {
-    
+
     @Autowired
     protected MiniPGLocalSettings miniPGlocalSetings;
-    
+
     private static final String PG_COMM_PREFIX = "-- minipg_version";
-    
+
     @Override
     public WireProtocolPacket decode(byte[] buffer) {
-        
+
         return this;
     }
-    
+
     @Override
     public byte[] response() {
-        
+
         List<String> cellValues = new ArrayList<>();
 //        cellValues.add(0, miniPGlocalSetings.getVersion());
         cellValues.add(0, getEmbeddedSystemValue("minipg.version"));
@@ -39,27 +39,28 @@ public class VersionPacket extends AbstractWireProtocolPacket {
         Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
         return table.generateMessage();
     }
-    
+
     public static boolean matches(String messageStr) {
-        
+
         return Util.caseInsensitiveContains(messageStr, PG_COMM_PREFIX);
     }
-    
+
     public String getEmbeddedSystemValue(String key) {
 
         Properties properties = new Properties();
-        
+
         String propFileName = "embedded_version.properties";
-        
+
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(propFileName);
-        
+
         try {
-            
+
             properties.load(inputStream);
         } catch (IOException e) {
             e.printStackTrace();
+            return "failed";
         }
         return properties.getProperty(key);
     }
-    
+
 }
