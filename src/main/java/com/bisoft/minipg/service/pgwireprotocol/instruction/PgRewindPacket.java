@@ -84,12 +84,12 @@ public class PgRewindPacket extends AbstractWireProtocolPacket {
 
         if (cellValues == null) {
             cellValues = new ArrayList<>();
-            cellValues.add(0, "false");
+            cellValues.add(0, "failed");
             Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
             return table.generateMessage();
         }
-        cellValues.add(0, "true");
-        cellValues.add(0, PG_COMMAND + " pg_rewind command executed at : " + new Date());
+//        cellValues.add(0, "true");
+        cellValues.add(1, PG_COMMAND + " pg_rewind command executed at : " + new Date());
         Table table = (new TableHelper()).generateSingleColumnTable("result", cellValues, "SELECT");
         return table.generateMessage();
 
