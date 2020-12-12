@@ -2,8 +2,8 @@
 System Variables
 ****************
 
-General Variables Variables
-###########################
+General Variables
+#################
 
 * logging.level.com.bisoft
 
