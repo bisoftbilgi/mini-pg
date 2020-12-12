@@ -27,4 +27,12 @@ Here is a example config file:
     #minipg.postgres_bin_path=C:/Program Files/PostgreSQL/9.6/bin/
     #minipg.postgres_data_path=D:/winPG_yedek/
     #minipg.os=windows
+    #fill the following parameters in accordance with the cluster environment
+    minipg.postgres_bin_path=/usr/pgsql-10/bin/
+    minipg.pgctl_bin_path=/usr/pgsql-10/bin/
+    minipg.postgres_data_path=/var/lib/pgsql/10/data/
+    minipg.os=linux
+    minipg.version=1.8.0-SNAPSHOT
+    application.minipg.UserName =  username
+    application.minipg.pwd      =  password
 
