@@ -17,9 +17,7 @@ Config File
 
 MiniPG uses application.properties config file located under /etc/bfm/minipg
 
-Here is a example config file
-
-This is a simple example:
+Here is a example config file:
 ::
 
     logging.pattern.console= %-18.18logger{39} : %m%n%wEx
