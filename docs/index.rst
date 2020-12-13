@@ -36,3 +36,10 @@ Here is a example config file:
     application.minipg.UserName =  username
     application.minipg.pwd      =  password
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Basics
+
+   index.rst
+   variables.rst
+

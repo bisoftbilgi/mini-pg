@@ -25,3 +25,5 @@ MiniPG Specific Variables
 * application.minipg.UserName
 
 * application.minipg.pwd
+
+
