@@ -14,6 +14,17 @@ MiniPG Specific Variables
 
 * minipg.postgres_bin_path
 
++-------------------+-----------------------------------------------+
+| **variable name** | minipg.postgres_bin_path                      |
++-------------------+-----------------------------------------------+
+| **type**          | String                                        |
++-------------------+-----------------------------------------------+
+| **description**   | Directıry path of the postgresql              |
+|                   | executeable files (eg. psql,pg_rewind etc.).  |
+|                   | These executeables will be used by mini-pg    |
+|                   | to performs administrative tasks              |
++-------------------+-----------------------------------------------+
+
 * minipg.pgctl_bin_path
 
 * minipg.postgres_data_path
