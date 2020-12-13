@@ -24,7 +24,8 @@ MiniPG Specific Variables
 |                   | These executeables will be used by mini-pg    |
 |                   | to performs administrative tasks              |
 +-------------------+-----------------------------------------------+
-
+| **example**       | minipg.postgres_bin_path=/usr/pgsql-10/bin/   |
++-------------------+-----------------------------------------------+
 * minipg.pgctl_bin_path
 
 * minipg.postgres_data_path
