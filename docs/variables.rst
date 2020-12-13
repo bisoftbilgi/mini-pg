@@ -19,7 +19,7 @@ MiniPG Specific Variables
 +-------------------+-----------------------------------------------+
 | **type**          | String                                        |
 +-------------------+-----------------------------------------------+
-| **description**   | Directıry path of the postgresql              |
+| **description**   | Directory path of the postgresql              |
 |                   | executeable files (eg. psql,pg_rewind etc.).  |
 |                   | These executeables will be used by mini-pg    |
 |                   | to performs administrative tasks              |
