@@ -1,1 +1,0 @@
-(cd ../other/testClient && ./run.sh)

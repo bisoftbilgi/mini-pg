@@ -29,4 +29,3 @@
 bin/
 target/
 .mvn/
-/src/main/resources/.pg-start.sh.swp

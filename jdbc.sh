@@ -1,1 +1,0 @@
-(cd ../other/testjdbc/ && ./run.sh)
