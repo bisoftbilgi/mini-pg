@@ -200,6 +200,7 @@ public class MiniPGHelper {
             instructionFacate.tryAppendRestoreCommandToAutoConfFile();
             instructionFacate.tryToAppendConnInfoToAutoConfFile(rewindDTO.getMasterIp(), rewindDTO.getPort(), repUser);
             instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
+            
 
 
             // 8. create recovery.signal and standby.signal files
