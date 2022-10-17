@@ -170,8 +170,8 @@ public class MiniPGHelper {
 
             // 3. append restore_command=''
             log.info(String.valueOf(logNumber++)+". step : Appending Restore Command to conf");
-            instructionFacate.tryAppendLineToAutoConfFile("restore_command = ' '");
-            instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'current'");
+          //  instructionFacate.tryAppendLineToAutoConfFile("restore_command = ' '");
+           // instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'current'");
 
             // 4 .start the server
             log.info(String.valueOf(logNumber++)+". step : start server");
@@ -200,6 +200,7 @@ public class MiniPGHelper {
             instructionFacate.tryAppendRestoreCommandToAutoConfFile();
             instructionFacate.tryToAppendConnInfoToAutoConfFile(rewindDTO.getMasterIp(), rewindDTO.getPort(), repUser);
             instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
+            
 
 
             // 8. create recovery.signal and standby.signal files
