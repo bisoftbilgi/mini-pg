@@ -170,6 +170,36 @@ public class MiniPgController {
 
         Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
 
+        String postVipUpResult = this.postVipUp();
+
+        return result.toString()+"\n"+postVipUpResult;
+    }
+
+    private
+    String postVipUp() throws Exception {
+        String[] cmd = {"/bin/bash", "-c", "sudo " + miniPGlocalSetings.getPostVipUp()};
+        StringBuilder result = new StringBuilder();
+        for (String line : cmd) {
+            result.append(line + "\n");
+            log.info(line);
+        }
+
+        ArrayList<String> cellValues = new ArrayList<>();
+        Process pb = Runtime.getRuntime().exec(cmd);
+        int resultNum = pb.waitFor();
+
+        String line;
+
+
+        BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+
+        while ((line = input.readLine()) != null) {
+            cellValues.add(line);
+        }
+        input.close();
+
+        Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
+
 
         return result.toString();
     }
