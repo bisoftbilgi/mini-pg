@@ -1,0 +1,25 @@
+[Unit]
+Description = MiniPg Service
+After=network.target
+[Service]
+Type=forking
+
+User=root
+Group=root
+WorkingDirectory=/var/lib/pgsql
+#ilgili userın home u ve bfm klasörünün tanıtımı..
+WorkingDirectory=/etc/bfm/minipg
+
+#ExecStartPre = /usr/bin/sh /var/lib/pgsql/.bash_profile
+ExecStart = /etc/bfm/minipg/minipg.sh start
+ExecStop = /etc/bfm/minipg/minipg.sh stop
+ExecReload= /etc/bfm/minipg/minipg.sh reload
+
+# whenever watcher service is down it will be restarted again ...if you don't this behavior you can # this line..
+#Restart=always
+#RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+
+
