@@ -4,8 +4,8 @@ After=network.target
 [Service]
 Type=forking
 
-User=root
-Group=root
+User=postgres
+Group=postgres
 WorkingDirectory=/var/lib/pgsql
 #ilgili userın home u ve bfm klasörünün tanıtımı..
 WorkingDirectory=/etc/bfm/minipg
