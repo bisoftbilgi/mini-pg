@@ -2,6 +2,7 @@ package com.bisoft.minipg;
 
 import com.bisoft.minipg.dto.CheckPointDTO;
 import com.bisoft.minipg.dto.PromoteDTO;
+import com.bisoft.minipg.dto.ReBaseUpDTO;
 import com.bisoft.minipg.dto.RewindDTO;
 import com.bisoft.minipg.helper.*;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +75,13 @@ public class MiniPgController {
     public @ResponseBody
     String rewind(@RequestBody RewindDTO rewindDTO) {
         return miniPGHelper.doRewind(rewindDTO);
+    }
+
+    @RequestMapping(path = "/rebaseUp", method = RequestMethod.POST)
+    public @ResponseBody
+    String rebaseUp(@RequestBody ReBaseUpDTO rebaseUpDTO) {
+        log.info("rebaseUp Called...");
+        return miniPGHelper.doReBaseUp(rebaseUpDTO);
     }
 
     @RequestMapping(path = "/start", method = RequestMethod.GET)

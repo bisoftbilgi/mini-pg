@@ -2,6 +2,7 @@ package com.bisoft.minipg.helper;
 
 import com.bisoft.minipg.PgVersion;
 import com.bisoft.minipg.dto.PromoteDTO;
+import com.bisoft.minipg.dto.ReBaseUpDTO;
 import com.bisoft.minipg.dto.RewindDTO;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -124,6 +127,76 @@ public class MiniPGHelper {
         layout.save(config, new FileWriter(propertyFile));
     }
 
+    public String doReBaseUp(ReBaseUpDTO rebaseUpDTO) {
+        Integer logNumber = 1;
+
+        PgVersion localVersion = PgVersion.valueOf(miniPGlocalSetings.getPgVersion());
+        log.info("Verison of Postgresql Dedected As " + localVersion);
+
+        if (localVersion == PgVersion.V12X || localVersion == PgVersion.V13X || localVersion == PgVersion.V14X) {
+            //1. stepstop the pg but it's supposed to already stopped by watcher
+            log.info(String.valueOf(logNumber++)+". step : stop pg");
+            (new ScriptExecutor()).executeScript(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+                    "stop",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath(),
+                    "-mi");
+
+            
+            // 2. rejoin to cluster with pg_basebackup
+            log.info(String.valueOf(logNumber++)+". step : rejoining with pg_basebackup..");
+            try {
+                // 2.1. move broken data folder and backup
+                LocalDateTime ldateTime = LocalDateTime.now();
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+
+                String formattedDate = ldateTime.format(dateFormatter);
+                String newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"data"+"\\b", "data_"+formattedDate);
+                File f = new File(miniPGlocalSetings.getPostgresDataPath());
+                if (f.exists() && f.isDirectory()) {
+                    log.info(String.valueOf(logNumber++)+". step : move broken data directory with new name:", newDataDirFullPath);
+                    (new ScriptExecutor()).executeScript(
+                            "mv", 
+                            miniPGlocalSetings.getPostgresDataPath(),
+                            newDataDirFullPath);
+                } else {
+                    log.info("data dir not found:"+miniPGlocalSetings.getPostgresDataPath());
+                }
+
+                try {
+                    //2.2 copy master db with pg_basebackup
+                    log.info("1. create pg_basebackup rejoin script");
+                    String filename = "/tmp/rejoin.sh";
+                    instructionFacate.createRebaseScript(filename, rebaseUpDTO.getMasterIp(), rebaseUpDTO.getRepUser(), rebaseUpDTO.getRepPassword(), rebaseUpDTO.getMasterPort());
+                    log.info("2. execute rejoin script");
+                    (new CommandExecutor()).executeCommandSync(
+                    "/bin/bash", filename);
+
+                    // 2.3 start the server
+                    log.info(String.valueOf(logNumber++)+". step : start server");
+                    Boolean start_result = instructionFacate.tryStartSync();
+                    log.info("start Server result", start_result);
+                    if (!instructionFacate.tryStartSync())
+                        return null;
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    (new ScriptExecutor()).executeScript(
+                        "mv", 
+                        newDataDirFullPath,
+                        miniPGlocalSetings.getPostgresDataPath());
+                        return null;
+                }
+            } 
+            catch (Exception ex) {
+                ex.printStackTrace();
+                return null;
+            }            
+        }
+
+        return "OK";
+    }
+
     public String doRewind(RewindDTO rewindDTO) {
 
         Integer logNumber = 1;
@@ -175,6 +248,8 @@ public class MiniPGHelper {
 
             // 4 .start the server
             log.info(String.valueOf(logNumber++)+". step : start server");
+            Boolean start_result = instructionFacate.tryStartSync();
+            log.info("start Server result", start_result);
             if (!instructionFacate.tryStartSync())
                 return null;
             // 5. stop the server...

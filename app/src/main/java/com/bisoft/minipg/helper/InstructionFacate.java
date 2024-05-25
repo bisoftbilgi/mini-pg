@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -315,6 +317,7 @@ public class InstructionFacate {
                         "-D" + miniPGlocalSetings.getPostgresDataPath());
         boolean timeout = false;
         for (String cell : interResult) {
+            log.info("pg_ctl start command result:", cell);
             if (cell.contains("done")) {
                 result = true;
                 break;
@@ -475,6 +478,56 @@ public class InstructionFacate {
 
     }
 
+    public boolean createRebaseScript(final String filename,final String masterIp,
+                                      final String repUser,final String repPassword,final String masterPort){
+        try {
+            Files.delete(Paths.get(filename));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            final String pgData = miniPGlocalSetings.getPostgresDataPath();
+            final String pgCtlBinPath = miniPGlocalSetings.getPgCtlBinPath();
+            final String pgPassFile = miniPGlocalSetings.getPgPassFile();
+
+            FileOutputStream fos = new FileOutputStream(filename, false);
+            // fos.write("{PG_BIN_PATH}/pg_ctl stop -D{PG_DATA}\n"
+            //         .replace("{PG_DATA}",pgData)
+            //         .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+
+            // fos.write("sleep 5\n".getBytes());
+
+            // LocalDateTime ldateTime = LocalDateTime.now();
+            // DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+
+            // String formattedDate = ldateTime.format(dateFormatter);
+            // String newPgData = pgData.replaceAll("\\b"+"data"+"\\b", "data_"+formattedDate);
+
+            // fos.write("mv {PG_DATA} {NEW_PG_DATA}\n".replace("{PG_DATA}",pgData).replace("{NEW_PG_DATA}",newPgData).getBytes());
+
+            fos.write("export PGPASSWORD={REPLICATION_PASSWORD}\n".replace("{REPLICATION_PASSWORD}",repPassword).getBytes());
+
+            fos.write("bash -c \"{PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}\"\n"
+                    .replace("{PG_DATA}",pgData)
+                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{MASTER_IP}",masterIp)
+                    .replace("{MASTER_PORT}",masterPort)
+                    .replace("{REPLICATION_USER}",repUser).getBytes());
+
+            // fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+            //         .replace("{PG_DATA}",pgData)
+            //         .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            return false;
+        }
+
+        return true;
+
+    }
 
     public boolean tryStartSyncForRecovery(final String portNumber, final String userName,
                                            final String pword) {
