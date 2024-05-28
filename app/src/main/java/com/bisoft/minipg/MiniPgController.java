@@ -93,6 +93,15 @@ public class MiniPgController {
         return cellValues;
     }
 
+    @RequestMapping(path = "/stop", method = RequestMethod.GET)
+    public @ResponseBody
+    List<String> stop() {
+        List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
+                "-D" + miniPGlocalSetings.getPostgresDataPath());
+        return cellValues;
+    }
+
     @RequestMapping(path = "/pgstatus", method = RequestMethod.GET)
     public @ResponseBody
     List<String> pgstatus() {
@@ -113,9 +122,6 @@ public class MiniPgController {
     public @ResponseBody
     List<String> executeSQL(@RequestBody String sql) throws Exception {
         StringBuilder result = new StringBuilder();
-
-
-
         return Arrays.stream(result.toString().split("\n")).collect(Collectors.toList());
     }
 
