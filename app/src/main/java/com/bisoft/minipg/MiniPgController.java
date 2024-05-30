@@ -90,6 +90,14 @@ public class MiniPgController {
         List<String> cellValues = (new CommandExecutor()).executeCommandSync(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
                 "-D" + miniPGlocalSetings.getPostgresDataPath());
+        
+        while (miniPGHelper.startContinues()){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }    
+        }
         return cellValues;
     }
 

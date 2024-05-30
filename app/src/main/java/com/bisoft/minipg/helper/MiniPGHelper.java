@@ -314,7 +314,7 @@ public class MiniPGHelper {
         return "OK";
     }
 
-    private boolean startContinues() {
+    public boolean startContinues() {
 
         List<ProcessHandle> result = ProcessHandle.allProcesses().filter(p -> p.info().toString().contains("startup"))
                 .collect(Collectors.toList());
