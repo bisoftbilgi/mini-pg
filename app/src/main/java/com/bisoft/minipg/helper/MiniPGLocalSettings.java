@@ -51,6 +51,6 @@ public class MiniPGLocalSettings {
     @Value("${minipg.pg-password-file:/var/lib/postgres/.pgpass}")
     private String pgPassFile;
 
-    @Value("${minipg.post-vip-up:ifconfig}")
+    @Value("${minipg.post-vip-up:ip address}")
     private String postVipUp;
 }

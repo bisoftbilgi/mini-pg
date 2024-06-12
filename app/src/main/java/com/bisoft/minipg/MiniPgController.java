@@ -137,7 +137,8 @@ public class MiniPgController {
     public @ResponseBody
     String vipDown() throws Exception {
         StringBuilder result = new StringBuilder();
-        String[] cmd = {"/bin/bash", "-c", "sudo ifconfig " + miniPGlocalSetings.getVipInterface() + " down"};
+        String[] cmd = {"/bin/bash", "-c", "sudo ip address del " + miniPGlocalSetings.getVipIp() + "/" + miniPGlocalSetings.getVipIpNetmask()
+                        +" dev "+ miniPGlocalSetings.getVipInterface()};
         for (String line : cmd) {
             result.append(line + "\n");
             log.info(line);
@@ -167,9 +168,8 @@ public class MiniPgController {
     @RequestMapping(path = "/vip-up", method = RequestMethod.GET)
     public @ResponseBody
     String vipUp() throws Exception {
-        String[] cmd = {"/bin/bash", "-c", "sudo ifconfig "
-                + miniPGlocalSetings.getVipInterface() + " "
-                + miniPGlocalSetings.getVipIp() + " netmask " + miniPGlocalSetings.getVipIpNetmask() + " up"};
+        String[] cmd = {"/bin/bash", "-c", "sudo ip address add "+ miniPGlocalSetings.getVipIp() + "/" + miniPGlocalSetings.getVipIpNetmask() 
+                        +" dev "+ miniPGlocalSetings.getVipInterface()};
         StringBuilder result = new StringBuilder();
         for (String line : cmd) {
             result.append(line + "\n");
