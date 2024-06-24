@@ -1,12 +1,12 @@
 package com.bisoft.minipg;
 
-import com.bisoft.minipg.dto.CheckPointDTO;
-import com.bisoft.minipg.dto.PromoteDTO;
-import com.bisoft.minipg.dto.ReBaseUpDTO;
-import com.bisoft.minipg.dto.RewindDTO;
-import com.bisoft.minipg.helper.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,17 +14,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.bisoft.minipg.dto.CheckPointDTO;
+import com.bisoft.minipg.dto.PromoteDTO;
+import com.bisoft.minipg.dto.ReBaseUpDTO;
+import com.bisoft.minipg.dto.RewindDTO;
+import com.bisoft.minipg.helper.CommandExecutor;
+import com.bisoft.minipg.helper.LocalSqlExecutor;
+import com.bisoft.minipg.helper.MiniPGHelper;
+import com.bisoft.minipg.helper.MiniPGLocalSettings;
+import com.bisoft.minipg.helper.SymmetricEncryptionUtil;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @RequestMapping("/minipg")
@@ -51,6 +52,13 @@ public class MiniPgController {
         return "OK";
     }
 
+    @RequestMapping(path = "/walloghintson", method = RequestMethod.POST)
+    public @ResponseBody
+    String walLogHintsOn(@RequestBody CheckPointDTO checkPointDTO) {
+        localSqlExecutor.executeLocalSql("alter system set wal_log_hints to on", checkPointDTO.getPort(), checkPointDTO.getUser(),
+                checkPointDTO.getPassword());
+        return "OK";
+    }
 
     @RequestMapping(path = "/promote", method = RequestMethod.POST)
     public @ResponseBody
