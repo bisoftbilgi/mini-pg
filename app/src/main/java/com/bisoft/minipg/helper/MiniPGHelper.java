@@ -17,6 +17,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 @Data
 @Slf4j
 @RequiredArgsConstructor
@@ -27,6 +29,76 @@ public class MiniPGHelper {
     private  final  InstructionUtil     instructionUtil;
     private final LocalSqlExecutor localSqlExecutor;
     private final InstructionFacate instructionFacate;
+
+    @PostConstruct
+    public void init() throws Exception {
+
+        StringBuilder result = new StringBuilder();
+        String[] cmd = {"psql", "-t", "-A", "--no-align", "-c", "show wal_log_hints"};
+
+        ArrayList<String> cellValues = new ArrayList<>();
+
+        Process pb = Runtime.getRuntime().exec(cmd);
+        int resultNum = pb.waitFor();
+
+        String line;
+
+        BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+        BufferedReader error = new BufferedReader(new InputStreamReader(pb.getErrorStream()));
+
+
+        while ((line = input.readLine()) != null) {
+            cellValues.add(line);
+        }
+        input.close();
+
+        while ((line = error.readLine()) != null) {
+            cellValues.add(line);
+        }
+        error.close();
+
+        for (String s : cellValues)
+        {
+            result.append(s);
+            result.append("\n");
+        }
+
+        if (result.indexOf("off") > -1){
+            log.warn("Wal Log Hints is "+result);
+            String wal_result = "";
+            String[] cmd_wal = {"psql", "-c", "alter system set wal_log_hints to on"};
+
+            ArrayList<String> cellValues_wal = new ArrayList<>();
+
+            Process pb_wal = Runtime.getRuntime().exec(cmd_wal);
+            int exit_code = pb_wal.waitFor();
+
+            String line_wal;
+
+            BufferedReader input_wal = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+            BufferedReader error_wal = new BufferedReader(new InputStreamReader(pb.getErrorStream()));
+
+            while ((line_wal = input_wal.readLine()) != null) {
+                cellValues_wal.add(line_wal);
+            }
+            input_wal.close();
+
+            while ((line = error_wal.readLine()) != null) {
+                cellValues_wal.add(line_wal);
+            }
+            error_wal.close();
+
+            for (String s : cellValues_wal)
+            {
+                wal_result += s +"\n";
+            }
+            log.info("Wal Log Hints SET result:"+wal_result);
+
+        } else {
+            log.info("wal_log_hints already set to on");
+        }
+    
+    }
 
     public String getEmbeddedSystemValue(String key) {
 
