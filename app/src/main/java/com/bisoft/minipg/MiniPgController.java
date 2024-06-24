@@ -52,14 +52,6 @@ public class MiniPgController {
         return "OK";
     }
 
-    @RequestMapping(path = "/walloghintson", method = RequestMethod.POST)
-    public @ResponseBody
-    String walLogHintsOn(@RequestBody CheckPointDTO checkPointDTO) {
-        localSqlExecutor.executeLocalSql("alter system set wal_log_hints to on", checkPointDTO.getPort(), checkPointDTO.getUser(),
-                checkPointDTO.getPassword());
-        return "OK";
-    }
-
     @RequestMapping(path = "/promote", method = RequestMethod.POST)
     public @ResponseBody
     String promote(@RequestBody PromoteDTO promoteDTO) {
@@ -136,9 +128,42 @@ public class MiniPgController {
 
     @RequestMapping(path = "/execute-sql", method = RequestMethod.POST)
     public @ResponseBody
-    List<String> executeSQL(@RequestBody String sql) throws Exception {
+    String executeSQL(@RequestBody String sql) throws Exception {
         StringBuilder result = new StringBuilder();
-        return Arrays.stream(result.toString().split("\n")).collect(Collectors.toList());
+        String[] cmd = {"/bin/bash", "-c", "psql -c \"" + sql +"\""};
+        for (String line : cmd) {
+            result.append(line + "\n");
+            log.info(line);
+        }
+
+        ArrayList<String> cellValues = new ArrayList<>();
+
+        Process pb = Runtime.getRuntime().exec(cmd);
+        int resultNum = pb.waitFor();
+
+        String line;
+
+        BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+        BufferedReader error = new BufferedReader(new InputStreamReader(pb.getErrorStream()));
+
+
+        while ((line = input.readLine()) != null) {
+            cellValues.add(line);
+        }
+        input.close();
+
+        while ((line = error.readLine()) != null) {
+            cellValues.add(line);
+        }
+        error.close();
+
+        for (String s : cellValues)
+        {
+            result.append(s);
+            result.append("\n");
+        }
+        // Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
+        return result.toString();
     }
 
     @RequestMapping(path = "/vip-down", method = RequestMethod.GET)
