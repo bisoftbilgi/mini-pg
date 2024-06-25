@@ -88,7 +88,7 @@ public class MiniPgController {
     public @ResponseBody
     List<String> start() {
         List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D" + miniPGlocalSetings.getPostgresDataPath());
         
         while (miniPGHelper.startContinues()){
@@ -105,7 +105,7 @@ public class MiniPgController {
     public @ResponseBody
     List<String> stop() {
         List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", "-w",
                 "-D" + miniPGlocalSetings.getPostgresDataPath());
         return cellValues;
     }

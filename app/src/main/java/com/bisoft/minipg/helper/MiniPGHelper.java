@@ -95,7 +95,7 @@ public class MiniPGHelper {
             log.info("Wal Log Hints SET result:"+wal_result);
 
             (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "restart",
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "restart","-w",
                     "-D" + miniPGlocalSetings.getPostgresDataPath());
 
         } else {
