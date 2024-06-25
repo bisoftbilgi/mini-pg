@@ -130,7 +130,7 @@ public class MiniPgController {
     public @ResponseBody
     String executeSQL(@RequestBody String sql) throws Exception {
         StringBuilder result = new StringBuilder();
-        String[] cmd = {"/bin/bash", "-c", "psql -c \"" + sql +"\""};
+        String[] cmd = {miniPGlocalSetings.getPgCtlBinPath()+"psql", "-c", "\"" + sql +"\""};
         for (String line : cmd) {
             result.append(line + "\n");
             log.info(line);

@@ -75,8 +75,8 @@ public class MiniPGHelper {
 
             String line_wal;
 
-            BufferedReader input_wal = new BufferedReader(new InputStreamReader(pb.getInputStream()));
-            BufferedReader error_wal = new BufferedReader(new InputStreamReader(pb.getErrorStream()));
+            BufferedReader input_wal = new BufferedReader(new InputStreamReader(pb_wal.getInputStream()));
+            BufferedReader error_wal = new BufferedReader(new InputStreamReader(pb_wal.getErrorStream()));
 
             while ((line_wal = input_wal.readLine()) != null) {
                 cellValues_wal.add(line_wal);
@@ -93,6 +93,10 @@ public class MiniPGHelper {
                 wal_result += s +"\n";
             }
             log.info("Wal Log Hints SET result:"+wal_result);
+
+            (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "restart",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
 
         } else {
             log.info("wal_log_hints already set to on");
