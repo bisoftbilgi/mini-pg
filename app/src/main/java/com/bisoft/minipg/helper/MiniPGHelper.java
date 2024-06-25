@@ -32,9 +32,18 @@ public class MiniPGHelper {
 
     @PostConstruct
     public void init() throws Exception {
-        (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start","-w",
+        List<String> postmaster_status = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "status",
             "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+        if ((postmaster_status.toString()).contains("PID:") && (postmaster_status.toString()).contains("server is running")){
+            log.info("Postmaster is running with:"+postmaster_status.toString().substring((postmaster_status.toString().indexOf("PID:")-1), (postmaster_status.toString().indexOf(")")+1)));
+        } else {
+            log.info("Postmaster auto starting...");
+            (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start","-w",
+                                "-D" + miniPGlocalSetings.getPostgresDataPath());
+        }
 
         StringBuilder result = new StringBuilder();
         String[] cmd = {miniPGlocalSetings.getPgCtlBinPath()+"psql", "-t", "-A", "--no-align", "-c", "show wal_log_hints"};
