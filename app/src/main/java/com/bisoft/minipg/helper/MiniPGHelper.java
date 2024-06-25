@@ -34,7 +34,7 @@ public class MiniPGHelper {
     public void init() throws Exception {
 
         StringBuilder result = new StringBuilder();
-        String[] cmd = {"psql", "-t", "-A", "--no-align", "-c", "show wal_log_hints"};
+        String[] cmd = {miniPGlocalSetings.getPgCtlBinPath()+"psql", "-t", "-A", "--no-align", "-c", "show wal_log_hints"};
 
         ArrayList<String> cellValues = new ArrayList<>();
 
@@ -66,7 +66,7 @@ public class MiniPGHelper {
         if (result.indexOf("off") > -1){
             log.warn("Wal Log Hints is "+result);
             String wal_result = "";
-            String[] cmd_wal = {"psql", "-c", "alter system set wal_log_hints to on"};
+            String[] cmd_wal = {miniPGlocalSetings.getPgCtlBinPath()+"psql", "-c", "alter system set wal_log_hints to on"};
 
             ArrayList<String> cellValues_wal = new ArrayList<>();
 
