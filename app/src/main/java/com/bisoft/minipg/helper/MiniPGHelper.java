@@ -329,8 +329,8 @@ public class MiniPGHelper {
             log.info(String.valueOf(logNumber++)+". step : start server");
             Boolean start_result = instructionFacate.tryStartSync();
             log.info("start Server result", start_result);
-            // if (!instructionFacate.tryStartSync())
-            //     return null;
+            if (!instructionFacate.tryStartSync())
+                return null;
             // 5. stop the server...
             log.info(String.valueOf(logNumber++)+". step : stop server");
             (new CommandExecutor()).executeCommandSync(
