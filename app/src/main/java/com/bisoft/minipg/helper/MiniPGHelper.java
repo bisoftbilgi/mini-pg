@@ -198,6 +198,17 @@ public class MiniPGHelper {
         instructionFacate.tryToAppendConnInfoToAutoConfFile(promoteDTO.getMasterIp(), promoteDTO.getPort(), repUser);
         instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
 
+        List<String> result_start1 = (new ScriptExecutor()).executeScript(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+                    "start",
+                    "-w",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+        if ((result_start1.toString()).contains("error") || (result_start1.toString()).contains("fatal")){
+            log.info(" Error occurrred on START PG, error:"+result_start1.toString());
+            return result_start1.toString();
+        }
+
         List<String> result_rw = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","ALTER SYSTEM SET default_transaction_read_only TO off;");
 
@@ -232,7 +243,7 @@ public class MiniPGHelper {
             "-mi");
 
         if ((result_start.toString()).contains("error") || (result_start.toString()).contains("fatal")){
-            log.info(" Error occurrred on STOP PG, error:"+result_start.toString());
+            log.info(" Error occurrred on START PG, error:"+result_start.toString());
             return result_start.toString();
         }
 
