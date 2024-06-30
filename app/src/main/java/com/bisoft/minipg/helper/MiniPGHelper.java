@@ -187,7 +187,8 @@ public class MiniPGHelper {
         Boolean revindSuccess = instructionFacate.tryRewindSync(promoteDTO.getMasterIp(),promoteDTO.getPort(), promoteDTO.getUser(), promoteDTO.getPassword());
         if (!revindSuccess)
             return null;
-
+        
+        instructionFacate.tryTouchingStandby();
         instructionFacate.tryAppendRestoreCommandToAutoConfFile();
         
         String repUser = miniPGlocalSetings.getReplicationUser();
