@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Controller;
@@ -257,6 +256,18 @@ public class MiniPgController {
 
 
         return result.toString();
+    }
+
+    @RequestMapping(path = "/pre-so", method = RequestMethod.POST)
+    public @ResponseBody
+    String preSwitchOver(@RequestBody PromoteDTO promoteDTO) {
+        return this.miniPGHelper.prepareForSwitchOver(promoteDTO);
+    }    
+    
+    @RequestMapping(path = "/post-so", method = RequestMethod.GET)
+    public @ResponseBody
+    String postSwitchOver() throws Exception {
+        return this.miniPGHelper.postSwitchOver();
     }
 
 

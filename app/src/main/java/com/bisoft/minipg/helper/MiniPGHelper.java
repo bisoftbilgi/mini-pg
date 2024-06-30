@@ -133,6 +133,113 @@ public class MiniPGHelper {
         return properties.getProperty(key);
     }
 
+    public String prepareForSwitchOver(PromoteDTO promoteDTO){
+        List<String> result_ro = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","ALTER SYSTEM SET default_transaction_read_only TO on;");
+
+        if ((result_ro.toString()).contains("error") || (result_ro.toString()).contains("fatal")){
+            log.info(" Error occurrred on altering Master Pg to Read Only, error:"+result_ro.toString());
+            return result_ro.toString();
+        } 
+
+        List<String> result_reload = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","SELECT pg_reload_conf();");
+
+        if ((result_reload.toString()).contains("error") || (result_reload.toString()).contains("fatal")){
+            log.info(" Error occurrred on pg_reload_conf, error:"+result_reload.toString());
+            return result_reload.toString();
+        } 
+
+        List<String> result_terminate = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","select pg_terminate_backend(pid) from pg_stat_activity;");
+
+        if ((result_terminate.toString()).contains("error") || (result_terminate.toString()).contains("fatal")){
+            log.info(" Error occurrred on pg_terminate_backend, error:"+result_terminate.toString());
+            return result_terminate.toString();
+        } 
+
+        List<String> result_walSW = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","SELECT  pg_switch_wal();");
+
+        if ((result_walSW.toString()).contains("error") || (result_walSW.toString()).contains("fatal")){
+            log.info(" Error occurrred on pg_switch_wal, error:"+result_walSW.toString());
+            return result_walSW.toString();
+        } 
+
+        List<String> result_checkpoint = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","CHECKPOINT ;");
+
+        if ((result_checkpoint.toString()).contains("error") || (result_checkpoint.toString()).contains("fatal")){
+            log.info(" Error occurrred on CHECKPOINT, error:"+result_checkpoint.toString());
+            return result_checkpoint.toString();
+        }
+        
+        List<String> result_stop = (new ScriptExecutor()).executeScript(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+                    "stop",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath(),
+                    "-mi");
+
+        if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
+            log.info(" Error occurrred on STOP PG, error:"+result_stop.toString());
+            return result_stop.toString();
+        }
+
+        instructionFacate.tryAppendRestoreCommandToAutoConfFile();
+        
+        String repUser = miniPGlocalSetings.getReplicationUser();
+        if (repUser == null || repUser.equals("")) {
+            repUser = promoteDTO.getUser();
+        }
+
+        instructionFacate.tryToAppendConnInfoToAutoConfFile(promoteDTO.getMasterIp(), promoteDTO.getPort(), repUser);
+        instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
+
+        return "OK";
+    }
+
+    public String postSwitchOver(){
+        List<String> result_rw = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","ALTER SYSTEM SET default_transaction_read_only TO off;");
+
+        if ((result_rw.toString()).contains("error") || (result_rw.toString()).contains("fatal")){
+            log.info(" Error occurrred on altering Pg to Read Only to R/W, error:"+result_rw.toString());
+            return result_rw.toString();
+        } 
+
+        List<String> result_reload = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","SELECT pg_reload_conf();");
+
+        if ((result_reload.toString()).contains("error") || (result_reload.toString()).contains("fatal")){
+            log.info(" Error occurrred on pg_reload_conf, error:"+result_reload.toString());
+            return result_reload.toString();
+        }
+        
+        List<String> result_stop = (new ScriptExecutor()).executeScript(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+            "stop",
+            "-D" + miniPGlocalSetings.getPostgresDataPath(),
+            "-mi");
+
+        if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
+            log.info(" Error occurrred on STOP PG, error:"+result_stop.toString());
+            return result_stop.toString();
+        }
+
+        List<String> result_start = (new ScriptExecutor()).executeScript(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+            "start",
+            "-D" + miniPGlocalSetings.getPostgresDataPath(),
+            "-mi");
+
+        if ((result_start.toString()).contains("error") || (result_start.toString()).contains("fatal")){
+            log.info(" Error occurrred on STOP PG, error:"+result_start.toString());
+            return result_start.toString();
+        }
+
+        return "OK";
+    }
+
     public List<String> promoteV10() {
 
         return (new ScriptExecutor()).executeScriptSync(
