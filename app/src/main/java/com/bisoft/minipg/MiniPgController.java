@@ -258,16 +258,16 @@ public class MiniPgController {
         return result.toString();
     }
 
-    @RequestMapping(path = "/pre-so", method = RequestMethod.POST)
+    @RequestMapping(path = "/pre-so", method = RequestMethod.GET)
     public @ResponseBody
-    String preSwitchOver(@RequestBody PromoteDTO promoteDTO) {
-        return this.miniPGHelper.prepareForSwitchOver(promoteDTO);
+    String preSwitchOver() {
+        return this.miniPGHelper.prepareForSwitchOver();
     }    
     
-    @RequestMapping(path = "/post-so", method = RequestMethod.GET)
+    @RequestMapping(path = "/post-so", method = RequestMethod.POST)
     public @ResponseBody
-    String postSwitchOver() throws Exception {
-        return this.miniPGHelper.postSwitchOver();
+    String postSwitchOver(@RequestBody PromoteDTO promoteDTO) throws Exception {
+        return this.miniPGHelper.postSwitchOver(promoteDTO);
     }
 
 

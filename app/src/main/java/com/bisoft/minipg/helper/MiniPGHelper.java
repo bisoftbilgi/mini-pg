@@ -133,7 +133,7 @@ public class MiniPGHelper {
         return properties.getProperty(key);
     }
 
-    public String prepareForSwitchOver(PromoteDTO promoteDTO){
+    public String prepareForSwitchOver(){
         List<String> result_ro = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","ALTER SYSTEM SET default_transaction_read_only TO on;");
 
@@ -150,13 +150,8 @@ public class MiniPGHelper {
             return result_reload.toString();
         } 
 
-        List<String> result_terminate = (new CommandExecutor()).executeCommandSync(
+        (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","select pg_terminate_backend(pid) from pg_stat_activity;");
-
-        if ((result_terminate.toString()).contains("error") || (result_terminate.toString()).contains("fatal")){
-            log.info(" Error occurrred on pg_terminate_backend, error:"+result_terminate.toString());
-            return result_terminate.toString();
-        } 
 
         List<String> result_walSW = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","SELECT  pg_switch_wal();");
@@ -185,6 +180,14 @@ public class MiniPGHelper {
             return result_stop.toString();
         }
 
+        return "OK";
+    }
+
+    public String postSwitchOver(PromoteDTO promoteDTO){
+        Boolean revindSuccess = instructionFacate.tryRewindSync(promoteDTO.getMasterIp(),promoteDTO.getPort(), promoteDTO.getUser(), promoteDTO.getPassword());
+        if (!revindSuccess)
+            return null;
+
         instructionFacate.tryAppendRestoreCommandToAutoConfFile();
         
         String repUser = miniPGlocalSetings.getReplicationUser();
@@ -195,10 +198,6 @@ public class MiniPGHelper {
         instructionFacate.tryToAppendConnInfoToAutoConfFile(promoteDTO.getMasterIp(), promoteDTO.getPort(), repUser);
         instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
 
-        return "OK";
-    }
-
-    public String postSwitchOver(){
         List<String> result_rw = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","ALTER SYSTEM SET default_transaction_read_only TO off;");
 
