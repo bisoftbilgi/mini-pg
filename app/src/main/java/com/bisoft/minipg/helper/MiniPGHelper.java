@@ -202,8 +202,7 @@ public class MiniPGHelper {
         List<String> result_start1 = (new ScriptExecutor()).executeScript(
                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
                     "start",
-                    "-w",
-                    "-D" + miniPGlocalSetings.getPostgresDataPath());
+                    "-D ", miniPGlocalSetings.getPostgresDataPath());
 
         if ((result_start1.toString()).contains("error") || (result_start1.toString()).contains("fatal")){
             log.info(" Error occurrred on START PG, error:"+result_start1.toString());
@@ -229,7 +228,8 @@ public class MiniPGHelper {
         List<String> result_stop = (new ScriptExecutor()).executeScript(
             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
             "stop",
-            "-D" + miniPGlocalSetings.getPostgresDataPath(),
+            "-D ", 
+            miniPGlocalSetings.getPostgresDataPath(),
             "-mi");
 
         if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
@@ -240,7 +240,8 @@ public class MiniPGHelper {
         List<String> result_start = (new ScriptExecutor()).executeScript(
             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
             "start",
-            "-D" + miniPGlocalSetings.getPostgresDataPath(),
+            "-D ", 
+            miniPGlocalSetings.getPostgresDataPath(),
             "-mi");
 
         if ((result_start.toString()).contains("error") || (result_start.toString()).contains("fatal")){
