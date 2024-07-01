@@ -198,17 +198,23 @@ public class MiniPGHelper {
         instructionFacate.tryToAppendConnInfoToAutoConfFile(promoteDTO.getMasterIp(), promoteDTO.getPort(), repUser);
         instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
 
-        List<String> result_start1 = (new ScriptExecutor()).executeScript(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
-                    "start",
-                    "-D",
-                    miniPGlocalSetings.getPostgresDataPath());
+        List<String> start_result = (new CommandExecutor()).executeCommandSync(
+                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                        "-D" + miniPGlocalSetings.getPostgresDataPath());
+                
+        while (startContinues()){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }    
+        }                    
 
         // log.info("pg_start result : " + result_start1.toString());
 
-        if ((result_start1.toString()).contains("error") || (result_start1.toString()).contains("fatal")){
-            log.info(" Error occurrred on START PG, error:"+result_start1.toString());
-            return result_start1.toString();
+        if ((start_result.toString()).contains("error") || (start_result.toString()).contains("fatal")){
+            log.info(" Error occurrred on START PG, error:"+start_result.toString());
+            return start_result.toString();
         }
 
         List<String> result_rw = (new CommandExecutor()).executeCommandSync(
