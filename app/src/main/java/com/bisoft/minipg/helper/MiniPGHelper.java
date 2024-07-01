@@ -172,8 +172,7 @@ public class MiniPGHelper {
         List<String> result_stop = (new ScriptExecutor()).executeScript(
                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
                     "stop",
-                    "-D" + miniPGlocalSetings.getPostgresDataPath(),
-                    "-mi");
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
 
         if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
             log.info(" Error occurrred on STOP PG, error:"+result_stop.toString());
@@ -189,7 +188,7 @@ public class MiniPGHelper {
             return null;
         
         instructionFacate.tryTouchingStandby();
-        instructionFacate.tryAppendRestoreCommandToAutoConfFile();
+        //instructionFacate.tryAppendRestoreCommandToAutoConfFile();
         
         String repUser = miniPGlocalSetings.getReplicationUser();
         if (repUser == null || repUser.equals("")) {
@@ -230,8 +229,7 @@ public class MiniPGHelper {
             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
             "stop",
             "-D", 
-            miniPGlocalSetings.getPostgresDataPath(),
-            "-mi");
+            miniPGlocalSetings.getPostgresDataPath());
 
         if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
             log.info(" Error occurrred on STOP PG, error:"+result_stop.toString());
@@ -265,7 +263,8 @@ public class MiniPGHelper {
         List<String> result = (new ScriptExecutor()).executeScriptSync(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
                 "promote",
-                "-D" + miniPGlocalSetings.getPostgresDataPath());
+                "-D", 
+                miniPGlocalSetings.getPostgresDataPath());
 
         (new LocalSqlExecutor()).executeLocalSql("CHECKPOINT", promoteDTO.getPort(), promoteDTO.getUser(),
                promoteDTO.getPassword());
