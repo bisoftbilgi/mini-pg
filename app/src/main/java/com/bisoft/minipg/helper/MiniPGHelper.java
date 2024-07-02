@@ -188,7 +188,7 @@ public class MiniPGHelper {
             return null;
         
         instructionFacate.tryTouchingStandby();
-        //instructionFacate.tryAppendRestoreCommandToAutoConfFile();
+        instructionFacate.tryAppendRestoreCommandToAutoConfFile();
         
         String repUser = miniPGlocalSetings.getReplicationUser();
         if (repUser == null || repUser.equals("")) {
