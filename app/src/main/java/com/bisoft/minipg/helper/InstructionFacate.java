@@ -96,7 +96,6 @@ public class InstructionFacate {
         return tryTouching(touchingFileName);
     }
 
-
     private boolean tryTouching(final String touchingFileName) {
         final String touchPath = miniPGlocalSetings.getPostgresDataPath() + touchingFileName;
         final Path   path      = Paths.get(touchPath);
@@ -190,6 +189,15 @@ public class InstructionFacate {
     public boolean tryAppendLineToAutoConfFile(final String line) {
 
         final String autoConfFilePath = miniPGlocalSetings.getPostgresDataPath() + "postgresql.auto.conf";
+        File autoConfFile = new File(autoConfFilePath);
+        if (!autoConfFile.isFile()){
+            try {
+                final Path path = Paths.get(autoConfFilePath);
+                Files.createFile(path);   
+            } catch (Exception e) {
+                e.printStackTrace();
+            }            
+        }
         return tryAppendLine(autoConfFilePath, line);
     }
 
