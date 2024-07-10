@@ -233,29 +233,30 @@ public class MiniPGHelper {
             return result_reload.toString();
         }
         
-        // List<String> result_stop = (new ScriptExecutor()).executeScript(
-        //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
-        //     "stop",
-        //     "-D", 
-        //     miniPGlocalSetings.getPostgresDataPath());
+        List<String> result_stop = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", 
+                                                    "stop",
+                                                    "-D",
+                                                    miniPGlocalSetings.getPostgresDataPath(),
+                                                    "-mi");
 
-        // if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
-        //     log.info(" Error occurrred on STOP PG, error:"+result_stop.toString());
-        //     return result_stop.toString();
-        // }
+        if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
+            log.info(" Error occurrred on pg_ctl stop, error:"+result_stop.toString());
+            return result_reload.toString();
+        }
 
-        // List<String> result_start = (new ScriptExecutor()).executeScript(
-        //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
-        //     "start",
-        //     "-D",
-        //     miniPGlocalSetings.getPostgresDataPath());
-
-        // log.info("pg_start result : " + result_start.toString());
-
-        // if ((result_start.toString()).contains("error") || (result_start.toString()).contains("fatal")){
-        //     log.info(" Error occurrred on START PG, error:"+result_start.toString());
-        //     return result_start.toString();
-        // }
+        List<String> last_start_result = (new CommandExecutor()).executeCommandSync(
+                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                        "-D" + miniPGlocalSetings.getPostgresDataPath());
+                
+        while (startContinues()){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }    
+        }                    
+        
 
         return "OK";
     }
