@@ -242,7 +242,7 @@ public class MiniPGHelper {
 
         if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
             log.info(" Error occurrred on pg_ctl stop, error:"+result_stop.toString());
-            return result_reload.toString();
+            return result_stop.toString();
         }
 
         List<String> last_start_result = (new CommandExecutor()).executeCommandSync(
@@ -257,6 +257,10 @@ public class MiniPGHelper {
             }    
         }                    
         
+        if ((last_start_result.toString()).contains("error") || (last_start_result.toString()).contains("fatal")){
+            log.info(" Error occurrred on START PG, error:"+last_start_result.toString());
+            return last_start_result.toString();
+        }
 
         return "OK";
     }
