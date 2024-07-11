@@ -467,18 +467,6 @@ public class MiniPGHelper {
           //  instructionFacate.tryAppendLineToAutoConfFile("restore_command = ' '");
            // instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'current'");
 
-            // 4 .start the server
-            // log.info(String.valueOf(logNumber++)+". step : start server");
-            // Boolean start_result = instructionFacate.tryStartSync();
-            // log.info("start Server result", start_result);
-            // if (!instructionFacate.tryStartSync())
-            //     return null;
-            // 5. stop the server...
-            // log.info(String.valueOf(logNumber++)+". step : stop server");
-            // (new CommandExecutor()).executeCommandSync(
-            //         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
-            //         "-D" + miniPGlocalSetings.getPostgresDataPath());
-
             // 6 . do rewind...
             log.info(String.valueOf(logNumber++)+". step : do rewind");
             Boolean revindSuccess = instructionFacate.tryRewindSync(rewindDTO.getMasterIp(),rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
@@ -530,6 +518,21 @@ public class MiniPGHelper {
                     rewindDTO.getPort(),
                     rewindDTO.getUser(),
                     rewindDTO.getPassword());
+
+            // 5. stop the server...
+            log.info(String.valueOf(logNumber++)+". step : stop server");
+            (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+            // 9 .start the server
+            log.info(String.valueOf(logNumber++)+". step : stop server");
+            (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", 
+                    "start",
+                    "-w",
+                    "-D" , 
+                    miniPGlocalSetings.getPostgresDataPath());
 
         }
         return "OK";
