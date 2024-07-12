@@ -32,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MiniPgController {
 
-    private final LocalSqlExecutor localSqlExecutor;
     private final MiniPGLocalSettings miniPGlocalSetings;
     private final MiniPGHelper miniPGHelper;
     private final SymmetricEncryptionUtil symmetricEncryptionUtil;
@@ -43,12 +42,13 @@ public class MiniPgController {
         return "OK";
     }
 
-    @RequestMapping(path = "/checkpoint", method = RequestMethod.POST)
+    @RequestMapping(path = "/checkpoint", method = RequestMethod.GET)
     public @ResponseBody
     String checkpoint(@RequestBody CheckPointDTO checkPointDTO) {
-        localSqlExecutor.executeLocalSql("CHECKPOINT", checkPointDTO.getPort(), checkPointDTO.getUser(),
-                checkPointDTO.getPassword());
-        return "OK";
+        List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", "-w",
+            "-D" + miniPGlocalSetings.getPostgresDataPath());
+        return cellValues.toString();
     }
 
     @RequestMapping(path = "/promote", method = RequestMethod.POST)
