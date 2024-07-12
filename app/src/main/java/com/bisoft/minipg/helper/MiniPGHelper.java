@@ -393,8 +393,19 @@ public class MiniPGHelper {
                     String filename = "/tmp/rejoin.sh";
                     instructionFacate.createRebaseScript(filename, rebaseUpDTO.getMasterIp(), rebaseUpDTO.getRepUser(), rebaseUpDTO.getRepPassword(), rebaseUpDTO.getMasterPort());
                     log.info("2. execute rejoin script");
-                    (new CommandExecutor()).executeCommandSync(
+                    
+                    List<String> result_script = (new CommandExecutor()).executeCommandSync(
                     "/bin/bash", filename);
+
+                    if ((result_script.toString()).contains("No space left on device")){
+                        (new CommandExecutor()).executeCommandSync("/bin/bash",
+                                                                            "-c",
+                                                                            "\"rm -rf "+
+                                                                            (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
+                                                                                        miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
+                                                                                        miniPGlocalSetings.getPostgresDataPath() +"_*")
+                                                                                        + "\"");
+                    } 
 
                     // 2.3 start the server
                     log.info(String.valueOf(logNumber++)+". step : start server");
