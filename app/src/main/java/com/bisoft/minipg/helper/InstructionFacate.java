@@ -408,7 +408,9 @@ public class InstructionFacate {
         psql -c "checkpoint"
          */
         try {
-            Files.delete(Paths.get(filename));
+            if (Paths.get(filename).toFile().isFile()){
+                Files.delete(Paths.get(filename));
+            }            
         } catch (IOException e) {
             e.printStackTrace();
         }
