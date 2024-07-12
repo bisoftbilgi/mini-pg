@@ -12,6 +12,9 @@ import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -457,7 +460,10 @@ public class MiniPGHelper {
                     "stop",
                     "-D" + miniPGlocalSetings.getPostgresDataPath(),
                     "-mi");
-
+            if (Files.notExists(Paths.get(miniPGlocalSetings.getPostgresDataPath()))){
+                log.warn("data direcory "+ miniPGlocalSetings.getPostgresDataPath() +" not exists.");
+                return null;
+            }
             // 2. touch standby.signal
             log.info(String.valueOf(logNumber++)+". step : create standby.signal");
             instructionFacate.tryTouchingStandby();
