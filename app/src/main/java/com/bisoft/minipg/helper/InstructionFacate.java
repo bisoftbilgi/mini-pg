@@ -488,7 +488,9 @@ public class InstructionFacate {
     public boolean createRebaseScript(final String filename,final String masterIp,
                                       final String repUser,final String repPassword,final String masterPort){
         try {
-            Files.delete(Paths.get(filename));
+            if ((Paths.get(filename)).toFile().isFile()){
+                Files.delete(Paths.get(filename));
+            }            
         } catch (IOException e) {
             e.printStackTrace();
         }
