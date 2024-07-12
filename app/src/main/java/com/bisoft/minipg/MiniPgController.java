@@ -46,8 +46,7 @@ public class MiniPgController {
     public @ResponseBody
     String checkpoint(@RequestBody CheckPointDTO checkPointDTO) {
         List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", "-w",
-            "-D" + miniPGlocalSetings.getPostgresDataPath());
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c", "\"CHECKPOINT;\"");
         return cellValues.toString();
     }
 
