@@ -405,7 +405,9 @@ public class MiniPGHelper {
                                                                                         miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
                                                                                         miniPGlocalSetings.getPostgresDataPath() +"_*")
                                                                                         + "\"");
-                    } 
+                    }else if((result_script.toString()).contains("no pg_hba.conf entry")){
+                        return "pg_basebackup FAILED. Possible Reason :" + result_script.toString();
+                    }                  
 
                     // 2.3 start the server
                     log.info(String.valueOf(logNumber++)+". step : start server");
@@ -446,6 +448,12 @@ public class MiniPGHelper {
         PgVersion localVersion = PgVersion.valueOf(miniPGlocalSetings.getPgVersion());
         log.info("Verison of Postgresql Dedected As " + localVersion);
 
+        File f = new File(miniPGlocalSetings.getPostgresDataPath());
+        if (!(f.exists() && f.isDirectory())) {
+            log.info("Data directory" + miniPGlocalSetings.getPostgresDataPath() + " created.");
+            return "PGDATA not exist..";
+        }
+
         if (localVersion == PgVersion.V11X || localVersion == PgVersion.V10X) {
 
             log.info("1. create rewind script");
@@ -471,10 +479,6 @@ public class MiniPGHelper {
                     "stop",
                     "-D" + miniPGlocalSetings.getPostgresDataPath(),
                     "-mi");
-            if (Files.notExists(Paths.get(miniPGlocalSetings.getPostgresDataPath()))){
-                log.warn("data direcory "+ miniPGlocalSetings.getPostgresDataPath() +" not exists.");
-                return null;
-            }
             // 2. touch standby.signal
             log.info(String.valueOf(logNumber++)+". step : create standby.signal");
             instructionFacate.tryTouchingStandby();
