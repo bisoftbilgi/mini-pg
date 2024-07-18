@@ -186,32 +186,74 @@ public class MiniPGHelper {
     }
 
     public String postSwitchOver(PromoteDTO promoteDTO){
+        (new ScriptExecutor()).executeScript(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+                    "stop",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
+
         Boolean revindSuccess = instructionFacate.tryRewindSync(promoteDTO.getMasterIp(),promoteDTO.getPort(), promoteDTO.getUser(), promoteDTO.getPassword());
         if (!revindSuccess)
             return null;
-        
-        instructionFacate.tryTouchingStandby();
-        instructionFacate.tryAppendRestoreCommandToAutoConfFile();
+
         
         String repUser = miniPGlocalSetings.getReplicationUser();
         if (repUser == null || repUser.equals("")) {
             repUser = promoteDTO.getUser();
         }
 
+        log.info("Appending Restore Command");
+        instructionFacate.tryAppendRestoreCommandToAutoConfFile();
         instructionFacate.tryToAppendConnInfoToAutoConfFile(promoteDTO.getMasterIp(), promoteDTO.getPort(), repUser);
         instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
+
+        // 2. touch standby.signal
+        log.info("create standby.signal");
+        instructionFacate.tryTouchingStandby();
+
+        // 8. create recovery.signal and standby.signal files
+        log.info("create recovery.signal");
+        instructionFacate.tryTouchingRecovery();
+
+        // 9 .start the server
+        log.info("start server");
+        if (!instructionFacate.tryStartSyncForRecovery(promoteDTO.getPort(), promoteDTO.getUser(), promoteDTO.getPassword()))
+            return null;
+
+        // 10. checkpoint
+        log.info("checkpoint");
+        instructionFacate.checkPoint(promoteDTO.getPort(), promoteDTO.getUser(), promoteDTO.getPassword());
+
+        //11. execute local restore and primary conn info
+        log.info("execute local restore and primary conn info");
+        instructionFacate.executeLocalRestoreCommand(promoteDTO.getPort(), promoteDTO.getUser(), promoteDTO.getPassword());
+        instructionFacate.executeLocalPrimaryConnInfo(promoteDTO.getPort(), promoteDTO.getUser(), promoteDTO.getPassword(),
+        promoteDTO.getMasterIp()
+        );
+        instructionFacate.executeLocalTargetTimeLineLatest(
+            promoteDTO.getPort(),
+            promoteDTO.getUser(),
+            promoteDTO.getPassword());
+
+                 
 
         List<String> start_result = (new CommandExecutor()).executeCommandSync(
                         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                         "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+        // 12. reload configuration
+        // log.info("reload pg configuration");
+        // instructionFacate.reloadConf(
+        //     promoteDTO.getPort(),
+        //     promoteDTO.getUser(),
+        //     promoteDTO.getPassword());  
                 
-        while (startContinues()){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }    
-        }                    
+        // while (startContinues()){
+        //     try {
+        //         Thread.sleep(1000);
+        //     } catch (InterruptedException e) {
+        //         e.printStackTrace();
+        //     }    
+        // }                    
 
         // log.info("pg_start result : " + result_start1.toString());
 
@@ -234,35 +276,6 @@ public class MiniPGHelper {
         if ((result_reload.toString()).contains("error") || (result_reload.toString()).contains("fatal")){
             log.info(" Error occurrred on pg_reload_conf, error:"+result_reload.toString());
             return result_reload.toString();
-        }
-        
-        List<String> result_stop = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", 
-                                                    "stop",
-                                                    "-D",
-                                                    miniPGlocalSetings.getPostgresDataPath(),
-                                                    "-mi");
-
-        if ((result_stop.toString()).contains("error") || (result_stop.toString()).contains("fatal")){
-            log.info(" Error occurrred on pg_ctl stop, error:"+result_stop.toString());
-            return result_stop.toString();
-        }
-
-        List<String> last_start_result = (new CommandExecutor()).executeCommandSync(
-                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                        "-D" + miniPGlocalSetings.getPostgresDataPath());
-                
-        while (startContinues()){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }    
-        }                    
-        
-        if ((last_start_result.toString()).contains("error") || (last_start_result.toString()).contains("fatal")){
-            log.info(" Error occurrred on START PG, error:"+last_start_result.toString());
-            return last_start_result.toString();
         }
 
         return "OK";
@@ -467,8 +480,6 @@ public class MiniPGHelper {
             instructionFacate.checkPoint(rewindDTO.getPort(), rewindDTO.getUser(),rewindDTO.getPassword());
 
             log.info("RESULT  : rewind ended successfully");
-
-
         }
 
         if (localVersion == PgVersion.V12X || localVersion == PgVersion.V13X || localVersion == PgVersion.V14X) {
@@ -477,14 +488,10 @@ public class MiniPGHelper {
             (new ScriptExecutor()).executeScript(
                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
                     "stop",
-                    "-D" + miniPGlocalSetings.getPostgresDataPath(),
-                    "-mi");
-            // 2. touch standby.signal
-            log.info(String.valueOf(logNumber++)+". step : create standby.signal");
-            instructionFacate.tryTouchingStandby();
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
 
             // 3. append restore_command=''
-            log.info(String.valueOf(logNumber++)+". step : Appending Restore Command to conf");
+            // log.info(String.valueOf(logNumber++)+". step : Appending Restore Command to conf");
           //  instructionFacate.tryAppendLineToAutoConfFile("restore_command = ' '");
            // instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'current'");
 
@@ -498,25 +505,34 @@ public class MiniPGHelper {
             if (revindSuccess == null) {
                 return " no way for successful completing the recovery";
             }
-
-
+            
             // 7.append parameters to pg auto conf
             log.info(String.valueOf(logNumber++)+". step : Appending Restore Command");
             instructionFacate.tryAppendRestoreCommandToAutoConfFile();
             instructionFacate.tryToAppendConnInfoToAutoConfFile(rewindDTO.getMasterIp(), rewindDTO.getPort(), repUser);
             instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
-            
 
+            // 2. touch standby.signal
+            log.info(String.valueOf(logNumber++)+". step : create standby.signal");
+            instructionFacate.tryTouchingStandby();
 
             // 8. create recovery.signal and standby.signal files
-            log.info("10. step : create recovery.signal and standby.signal");
+            log.info("10. step : create recovery.signal");
             instructionFacate.tryTouchingRecovery();
-            instructionFacate.tryTouchingStandby();
 
             // 9 .start the server
             log.info(String.valueOf(logNumber++)+". step : start server");
-            if (!instructionFacate.tryStartSyncForRecovery(rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword()))
-                return null;
+            List<String> start_result = (new CommandExecutor()).executeCommandSync(
+                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                        "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+            if ((start_result.toString()).contains("error") || (start_result.toString()).contains("fatal")){
+                log.info(" Error occurrred on START PG, error:"+start_result.toString());
+                return start_result.toString();
+            }
+            
+            // if (!instructionFacate.tryStartSyncForRecovery(rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword()))
+            //     return null;
 
             // 10. checkpoint
             log.info(String.valueOf(logNumber++)+". step : checkpoint");
@@ -540,20 +556,20 @@ public class MiniPGHelper {
                     rewindDTO.getUser(),
                     rewindDTO.getPassword());
 
-            // 5. stop the server...
-            log.info(String.valueOf(logNumber++)+". step : stop server");
-            (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
-                    "-D" + miniPGlocalSetings.getPostgresDataPath());
+            // // 5. stop the server...
+            // log.info(String.valueOf(logNumber++)+". step : stop server");
+            // (new CommandExecutor()).executeCommandSync(
+            //         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
+            //         "-D" + miniPGlocalSetings.getPostgresDataPath());
 
-            // 9 .start the server
-            log.info(String.valueOf(logNumber++)+". step : stop server");
-            (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", 
-                    "start",
-                    "-w",
-                    "-D" , 
-                    miniPGlocalSetings.getPostgresDataPath());
+            // // 9 .start the server
+            // log.info(String.valueOf(logNumber++)+". step : stop server");
+            // (new CommandExecutor()).executeCommandSync(
+            //         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", 
+            //         "start",
+            //         "-w",
+            //         "-D" , 
+            //         miniPGlocalSetings.getPostgresDataPath());
 
         }
         return "OK";

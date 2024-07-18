@@ -302,6 +302,9 @@ public class InstructionFacate {
                 result = false;
                 return null;
 //                break;
+            } else if (cell.contains("error") || cell.contains("ERROR") || cell.contains("fatal") || cell.contains("FATAL")){
+                result = false;
+                return null;
             }
         }
 
