@@ -89,13 +89,6 @@ public class MiniPgController {
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D" + miniPGlocalSetings.getPostgresDataPath());
         
-        while (miniPGHelper.startContinues()){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }    
-        }
         return cellValues;
     }
 
