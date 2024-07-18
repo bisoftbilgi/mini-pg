@@ -493,11 +493,12 @@ public class InstructionFacate {
     public boolean createRebaseScript(final String filename,final String masterIp,
                                       final String repUser,final String repPassword,final String masterPort){
         try {
-            if ((Paths.get(filename)).toFile().isFile()){
-                Files.delete(Paths.get(filename));
-            }            
+            Path path = Paths.get(filename);
+                if (Files.exists(path)) {
+                    Files.delete(Paths.get(filename)); 
+                }         
         } catch (IOException e) {
-            e.printStackTrace();
+            log.warn("error on rejoin script file delete.");;
         }
 
         try {
