@@ -13,12 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.bisoft.minipg.dto.CheckPointDTO;
 import com.bisoft.minipg.dto.PromoteDTO;
 import com.bisoft.minipg.dto.ReBaseUpDTO;
 import com.bisoft.minipg.dto.RewindDTO;
 import com.bisoft.minipg.helper.CommandExecutor;
-import com.bisoft.minipg.helper.LocalSqlExecutor;
 import com.bisoft.minipg.helper.MiniPGHelper;
 import com.bisoft.minipg.helper.MiniPGLocalSettings;
 import com.bisoft.minipg.helper.SymmetricEncryptionUtil;
