@@ -63,7 +63,7 @@ public class InstructionUtil {
         // --source-server="host=192.168.2.90 port=5432 user=postgres dbname=postgres password=080419"
         String recoveryConfTemplate = null;
         String hostName             = getHostName();
-        recoveryConfTemplate = " primary_conninfo ='user={USER} passfile=''{PG_PASS_FILE}'' host={MASTER_IP} port={MASTER_PORT} sslmode={SSL_MODE} sslcompression={SSL_COMPRESSION} krbsrvname=postgres target_session_attrs=any application_name="
+        recoveryConfTemplate = "primary_conninfo ='user={USER} passfile=''{PG_PASS_FILE}'' host={MASTER_IP} port={MASTER_PORT} sslmode={SSL_MODE} sslcompression={SSL_COMPRESSION} krbsrvname=postgres target_session_attrs=any application_name="
                 + hostName
                 + "'";
 

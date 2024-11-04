@@ -38,7 +38,6 @@ public class LocalSqlExecutor {
             String    line;
             while (result.next()) {
                 line = result.getString(1);
-                System.out.println(line);
                 log.trace(line);
                 cellValues.add(line);
             }
@@ -51,8 +50,6 @@ public class LocalSqlExecutor {
     }
 
     public void executeLocalSql(String sqlString, String localPort, String localUser, String localPassword) {
-
-        System.out.println("sql executing:" + sqlString);
         log.trace("sql executing:" + sqlString);
 
         try (Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:" + localPort + "/postgres",
@@ -72,8 +69,6 @@ public class LocalSqlExecutor {
 
     public void tryExecuteLocalSql(String sqlString, String localPort, String localUser, String localPassword)
             throws Exception {
-
-        System.out.println("sql executing:" + sqlString);
         log.trace("sql executing:" + sqlString);
 
         Connection conn = DriverManager.getConnection("jdbc:postgresql://localhost:" + localPort + "/postgres",
@@ -106,7 +101,6 @@ public class LocalSqlExecutor {
 
             if (resultSet.next()) {
                 versionText = resultSet.getString(1);
-                System.out.println(versionText);
                 log.trace(versionText);
 
             }

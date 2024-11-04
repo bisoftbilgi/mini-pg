@@ -6,13 +6,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.6.2</version>
+		<version>3.3.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
-	
 	</parent>
 	<groupId>com.bisoft</groupId>
 	<artifactId>minipg</artifactId>
-	<version>2.0.0</version>
+	<version>3.0.0</version>
 	<packaging>pom</packaging>
 	
 	<name>minipg</name>
@@ -25,9 +24,59 @@
         </repository>
     </distributionManagement>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>kr.motd.maven</groupId>
+				<artifactId>os-maven-plugin</artifactId>
+				<version>1.7.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>detect</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>redhat-based</id>
+			<activation>
+				<property>
+					<name>os.detected.release</name>
+					<value>rhel</value>
+				</property>
+			</activation>
+			<properties>
+				<is.redhat>true</is.redhat>
+			</properties>
+		</profile>
+
+		<profile>
+			<id>debian-based</id>
+			<activation>
+				<os>
+					<family>unix</family>
+					<name>Linux</name>
+					<arch>x86_64</arch>
+				</os>
+				<property>
+					<name>os.detected.release</name>
+					<value>ubuntu</value>
+				</property>
+			</activation>
+			<properties>
+				<is.debian>true</is.debian>
+			</properties>
+		</profile>
+	</profiles>
 	<modules>
 		<module>app</module>
 		<module>rpm</module>
+		<!-- <module>deb</module> -->
 	</modules>
 
 </project>
