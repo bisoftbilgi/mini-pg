@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>com.bisoft</groupId>
 		<artifactId>minipg</artifactId>
-		<version>2.0.0</version>
+		<version>3.0.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>minipg-package</artifactId>
+	<artifactId>minipg-rpm-package</artifactId>
 	<packaging>rpm</packaging>
 
 	<name>MINIPG - RPM Package</name>
@@ -32,12 +34,12 @@
 				<configuration>
 					<group>${project.groupId}</group>
 					<mappings>
-                                                <mapping>
-                                                        <directory>/etc/bfm</directory>
-                                                        <filemode>755</filemode>
-                                                        <username>postgres</username>
+						<mapping>
+							<directory>/etc/bfm</directory>
+							<filemode>755</filemode>
+							<username>postgres</username>
 							<groupname>postgres</groupname>
-                                                </mapping>
+						</mapping>
 						<mapping>
 							<directory>/etc/bfm/minipg</directory>
 							<filemode>755</filemode>
@@ -50,10 +52,10 @@
 								</includes>
 							</dependency>
 							<sources>
-                                                                <source>
-                                                                        <location>src/main/resources/settings</location>
-                                                                </source>
-                                                        </sources>
+								<source>
+									<location>src/main/resources/settings</location>
+								</source>
+							</sources>
 						</mapping>
 						<mapping>
 							<directory>/etc/systemd/system</directory>
@@ -69,10 +71,10 @@
 						<mapping>
 							<directory>/etc/logrotate.d</directory>
 							<sources>
-                                                                <source>
-                                                                        <location>src/main/resources/minipglog</location>
-                                                                </source>
-                                                        </sources>
+								<source>
+									<location>src/main/resources/minipglog</location>
+								</source>
+							</sources>
 						</mapping>
 					</mappings>
 					<postinstallScriptlet>

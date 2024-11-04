@@ -1,0 +1,22 @@
+[Unit]
+Description="MiniPG Service"
+Wants=network-online.target 
+After=network-online.target
+
+[Service]
+Type=forking
+WorkingDirectory=/etc/bfm/minipg
+User=postgres
+Group=postgres
+
+ExecStart=/etc/bfm/minipg/minipg.sh start
+ExecStop=/etc/bfm/minipg/minipg.sh stop
+ExecReload=/etc/bfm/minipg/minipg.sh reload
+
+Restart=always
+
+[Install]
+WantedBy=sysinit.target
+Alias=minipg.service
+
+

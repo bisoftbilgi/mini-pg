@@ -101,7 +101,6 @@ public class ScriptExecutor {
                 if (line == null)
                     break;
                 log.trace(line);
-                System.out.println(line);
                 cellValues.add(line);
             }
 
@@ -137,8 +136,6 @@ public class ScriptExecutor {
                 if (line == null)
                     break;
                 result.add(line);
-//                result.append(line).append(NEWLINE);
-                System.out.println(line);
             }
         }
 

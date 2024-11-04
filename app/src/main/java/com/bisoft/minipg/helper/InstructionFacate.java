@@ -1,8 +1,9 @@
 package com.bisoft.minipg.helper;
-
-
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -12,12 +13,15 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
@@ -27,11 +31,14 @@ public class InstructionFacate {
     @Autowired
     protected     MiniPGLocalSettings miniPGlocalSetings;
     private final ScriptExecutor      scriptExecutor;
-    private final CommandExecutor     commandExecutor;
     private final LocalSqlExecutor    localSqlExecutor;
     private final InstructionUtil     instructionUtil;
     private Logger logger = LoggerFactory.getLogger(InstructionFacate.class);
 
+    @Value("${minipg.pgconf_file_fullpath:/etc/postgresql/16/main/postgresql.conf}")
+    private String pgconf_file_fullpath;
+
+    private final String osDistro = System.getProperties().getProperty("java.vm.vendor", "unknown");
 
     public List<String> pgCtlStop() {
 
@@ -45,11 +52,20 @@ public class InstructionFacate {
 
     public List<String> pgCtlStart() {
 
-        List<String> cellValues = commandExecutor.executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                "-D" + miniPGlocalSetings.getPostgresDataPath());
+        if (osDistro.equals("Ubuntu")){
+            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                "-D", miniPGlocalSetings.getPostgresDataPath() ,
+                "-o" , 
+                "\"--config-file="+pgconf_file_fullpath+"\"");
+                return cellValues;
 
-        return cellValues;
+        } else {
+            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                "-D" , miniPGlocalSetings.getPostgresDataPath());
+                return cellValues;
+        }  
     }
 
     public void checkPoint(String portNumber, String userName, String pword) {
@@ -95,7 +111,6 @@ public class InstructionFacate {
         return tryTouching(touchingFileName);
     }
 
-
     private boolean tryTouching(final String touchingFileName) {
         final String touchPath = miniPGlocalSetings.getPostgresDataPath() + touchingFileName;
         final Path   path      = Paths.get(touchPath);
@@ -122,7 +137,7 @@ public class InstructionFacate {
 
 
     public boolean tryAppendRestoreCommandToAutoConfFile() {
-        final String restoreCommand = miniPGlocalSetings.getRestoreCommand();
+        final String restoreCommand = "restore_command='"+miniPGlocalSetings.getRestoreCommand()+"'";
         return tryAppendLineToAutoConfFile(restoreCommand);
     }
 
@@ -189,6 +204,15 @@ public class InstructionFacate {
     public boolean tryAppendLineToAutoConfFile(final String line) {
 
         final String autoConfFilePath = miniPGlocalSetings.getPostgresDataPath() + "postgresql.auto.conf";
+        File autoConfFile = new File(autoConfFilePath);
+        if (!autoConfFile.isFile()){
+            try {
+                final Path path = Paths.get(autoConfFilePath);
+                Files.createFile(path);   
+            } catch (Exception e) {
+                e.printStackTrace();
+            }            
+        }
         return tryAppendLine(autoConfFilePath, line);
     }
 
@@ -264,12 +288,18 @@ public class InstructionFacate {
 
 
     public Boolean tryRewindSync(final String masterIp, final String port, final String user, final String password) {
+        String dataPath = miniPGlocalSetings.getPostgresDataPath();
+        if ((dataPath
+                .substring(dataPath.length()-1,dataPath.length())).equals("/"))
+        {
+            dataPath = dataPath.substring(0,dataPath.length()-1);
+        }
 
         final List<String> cellValues;
         cellValues = (new ScriptExecutor()).executeScriptSync(
                 "bash", "-c",
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_rewind --target-pgdata="
-                        + miniPGlocalSetings.getPostgresDataPath()
+                        + dataPath
                         + " --source-server='host="
                         + masterIp
                         + " port=" + port
@@ -278,6 +308,7 @@ public class InstructionFacate {
                         + " password=" + password
                         + "'");
 
+        log.info("pg_rewind command result : "+ String.join("\n",cellValues));
         // wait for  pg_rewind to be finishes
         while (rewindContinues()) {
             try {
@@ -289,11 +320,10 @@ public class InstructionFacate {
         // open
         boolean result = true;
         for (String cell : cellValues) {
-            if (cell.contains("no such file")) {
+            if (cell.contains("No such file or directory")) {
                 result = false;
                 return null;
-//                break;
-            }
+            } 
         }
 
         return result;
@@ -307,23 +337,57 @@ public class InstructionFacate {
 
     }
 
-    public boolean tryStartSync() {
-        boolean result = false;
-        List<String> interResult =
-                (new CommandExecutor()).executeCommandSync(
-                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                        "-D" + miniPGlocalSetings.getPostgresDataPath());
-        boolean timeout = false;
-        for (String cell : interResult) {
-            if (cell.contains("done")) {
-                result = true;
-                break;
-            }
-            if (cell.contains("did not start in time")) {
-                timeout = true;
-                break;
+    public boolean checkReplication(final String masterAddress, final String port, final String userName, final String password) {
+
+        List<String> result = localSqlExecutor.retrieveLocalSqlResult("Select sender_host ||':'||sender_port master_address from pg_stat_wal_receiver;", port, userName,password);
+        for (String address : result){
+            if ((masterAddress+":"+port).equals(address)){
+                return Boolean.TRUE;
             }
         }
+        return Boolean.FALSE;
+    }
+
+    public boolean tryStartSync() {
+        boolean result = false;
+        boolean timeout = false;
+
+        if (osDistro.equals("Ubuntu")){
+            List<String> interResult = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                "-D", miniPGlocalSetings.getPostgresDataPath() ,
+                "-o" , 
+                "\"--config-file="+pgconf_file_fullpath+"\"");
+
+            for (String cell : interResult) {
+                log.info("pg_ctl start command result:", cell);
+                if (cell.contains("done")) {
+                    result = true;
+                    break;
+                }
+                if (cell.contains("did not start in time")) {
+                    timeout = true;
+                    break;
+                }
+            }
+
+        } else {
+            List<String> interResult = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                "-D" , miniPGlocalSetings.getPostgresDataPath());
+
+            for (String cell : interResult) {
+                log.info("pg_ctl start command result:", cell);
+                if (cell.contains("done")) {
+                    result = true;
+                    break;
+                }
+                if (cell.contains("did not start in time")) {
+                    timeout = true;
+                    break;
+                }
+            }
+        }        
 
         if (timeout) {
             while (startContinues()) {
@@ -379,10 +443,6 @@ public class InstructionFacate {
             Process p = pb.start();
             BufferedReader reader =
                     new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
             int processResult = p.waitFor();
             logger.info("Process Result "+String.valueOf(processResult));
         }catch (IOException | InterruptedException e){
@@ -398,7 +458,9 @@ public class InstructionFacate {
         psql -c "checkpoint"
          */
         try {
-            Files.delete(Paths.get(filename));
+            if (Paths.get(filename).toFile().isFile()){
+                Files.delete(Paths.get(filename));
+            }            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -414,9 +476,19 @@ public class InstructionFacate {
                     .replace("{PG_DATA}",pgData)
                     .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
 
-            fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+            if (osDistro.equals("Ubuntu")){
+
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\"\n"
                     .replace("{PG_DATA}",pgData)
-                    .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{PG_CONF_FILE_FULLPATH}", pgconf_file_fullpath).getBytes());
+            } else {
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+                .replace("{PG_DATA}",pgData)
+                .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+            }
+
+            
             fos.write("sleep 5\n".getBytes());
 
             fos.write("{PG_BIN_PATH}/pg_ctl stop -D{PG_DATA}\n"
@@ -452,17 +524,33 @@ public class InstructionFacate {
                     .replace("{PG_DATA}",pgData)
                     .getBytes());
 
-            fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+            if (osDistro.equals("Ubuntu")){
+
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\"\n"
                     .replace("{PG_DATA}",pgData)
-                    .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{PG_CONF_FILE_FULLPATH}", pgconf_file_fullpath).getBytes());
+            } else {
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+                .replace("{PG_DATA}",pgData)
+                .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+            }
 
             fos.write("{PG_BIN_PATH}/pg_ctl stop -D{PG_DATA}\n"
                     .replace("{PG_DATA}",pgData)
                     .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
 
-            fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+            if (osDistro.equals("Ubuntu")){
+
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\"\n"
                     .replace("{PG_DATA}",pgData)
-                    .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{PG_CONF_FILE_FULLPATH}", pgconf_file_fullpath).getBytes());
+            } else {
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+                .replace("{PG_DATA}",pgData)
+                .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+            }
 
 
             fos.flush();
@@ -475,23 +563,79 @@ public class InstructionFacate {
 
     }
 
+    public boolean createRebaseScript(final String filename,final String masterIp,
+                                      final String repUser,final String repPassword,final String masterPort){
+        try {
+            Path path = Paths.get(filename);
+                if (Files.exists(path)) {
+                    Files.delete(Paths.get(filename)); 
+                }         
+        } catch (IOException e) {
+            log.warn("error on rejoin script file delete.");;
+        }
+
+        try {
+            final String pgData = miniPGlocalSetings.getPostgresDataPath();
+            final String pgCtlBinPath = miniPGlocalSetings.getPgCtlBinPath();
+            final String pgPassFile = miniPGlocalSetings.getPgPassFile();
+
+            FileOutputStream fos = new FileOutputStream(filename, false);
+
+            fos.write("export PGPASSWORD={REPLICATION_PASSWORD}\n".replace("{REPLICATION_PASSWORD}",repPassword).getBytes());
+
+            fos.write("bash -c \"{PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}\"\n"
+                    .replace("{PG_DATA}",pgData)
+                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{MASTER_IP}",masterIp)
+                    .replace("{MASTER_PORT}",masterPort)
+                    .replace("{REPLICATION_USER}",repUser).getBytes());
+
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            return false;
+        }
+
+        return true;
+
+    }
 
     public boolean tryStartSyncForRecovery(final String portNumber, final String userName,
                                            final String pword) {
         boolean result = false;
-        List<String> interResult =
-                (new CommandExecutor()).executeCommandSync(
-                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                        "-D" + miniPGlocalSetings.getPostgresDataPath());
         boolean timeout = false;
-        for (String cell : interResult) {
-            if (cell.contains("done")) {
-                result = true;
-                break;
+
+        if (osDistro.equals("Ubuntu")){
+            List<String> interResult = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                "-D", miniPGlocalSetings.getPostgresDataPath() ,
+                "-o" , 
+                "\"--config-file="+pgconf_file_fullpath+"\"");
+            for (String cell : interResult) {
+                if (cell.contains("done")) {
+                    result = true;
+                    break;
+                }
+                if (cell.contains("did not start in time")) {
+                    timeout = true;
+                    break;
+                }
             }
-            if (cell.contains("did not start in time")) {
-                timeout = true;
-                break;
+        }else {
+            List<String> interResult =
+            (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                    "-D" + miniPGlocalSetings.getPostgresDataPath());
+
+            for (String cell : interResult) {
+                if (cell.contains("done")) {
+                    result = true;
+                    break;
+                }
+                if (cell.contains("did not start in time")) {
+                    timeout = true;
+                    break;
+                }
             }
         }
 
@@ -552,6 +696,6 @@ public class InstructionFacate {
 
         return (result.size() > 0);
 
-    }
+    }  
 
 }

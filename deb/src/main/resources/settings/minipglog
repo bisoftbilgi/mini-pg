@@ -1,0 +1,8 @@
+/etc/bfm/minipg/minipg.log{
+weekly
+size 10M
+rotate 1
+missingok
+notifempty
+copytruncate
+}
