@@ -811,37 +811,11 @@ public class MiniPGHelper {
     
     public String prepareSubscriberDB(SubscriberDTO subscriberDTO){
 
-        List<String> createdb_result = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","CREATE DATABASE "+subscriberDTO.getDatname()+" ENCODING "+ subscriberDTO.getEncoding()
-                                                                +" LC_COLLATE '"+subscriberDTO.getLc_collate()+"';");
-
-        if (!((String.join("\n",createdb_result).toUpperCase()).contains("CREATE DATABASE"))){
-            log.info(" Error on CREATE SUBSCRIBER DB, error:"+String.join("\n",createdb_result));
-            return String.join("\n",createdb_result);
-        }
-
-        List<String> dumpall_result = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "pg_dumpall -h " + subscriberDTO.getPublisherAddress() 
-                                                                            +" -p "+ subscriberDTO.getPublisherPort() 
-                                                                            +" --globals-only | "+ miniPGlocalSetings.getPgCtlBinPath() + "psql");
-
-        if ((String.join("\n", dumpall_result).contains("error") || String.join("\n", dumpall_result).contains("fatal"))){
-            log.info(" Error occurrred on altering Pg to Read Only to R/W, error:"+String.join("\n", dumpall_result));
-            return String.join("\n", dumpall_result);
-        } 
-
-        List<String> datDump_result = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "pg_dump -h " + subscriberDTO.getPublisherAddress() 
-                                                                            +" -p "+ subscriberDTO.getPublisherPort() 
-                                                                            +" --schema-only "+subscriberDTO.getDatname()
-                                                                            +" | "
-                                                                            + miniPGlocalSetings.getPgCtlBinPath() + "psql -d "+ subscriberDTO.getDatname());
-
-        if ((String.join("\n", datDump_result).contains("error") || String.join("\n", datDump_result).contains("fatal"))){
-            log.info(" Error occurrred on altering Pg to Read Only to R/W, error:"+String.join("\n", datDump_result));
-            return String.join("\n", datDump_result);
-        } 
-
+        String filename = "/tmp/prepareSubscriber.sh";
+        instructionFacate.createPrepSubscritionScript(filename, subscriberDTO);
+        log.info("Subscrition Prepare script executing now.");
+        List<String> result_script = (new CommandExecutor()).executeCommandSync("/bin/bash", filename);
+        log.info("Subscrition Prepare script result:"+ String.join("\n",result_script));
         return "OK";
     }
 }

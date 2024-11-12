@@ -11,4 +11,6 @@ public class SubscriberDTO {
     private String lc_collate;
     private String publisherAddress;
     private String publisherPort;
+    private String publisherPU;
+    private String publisherPP;
 }

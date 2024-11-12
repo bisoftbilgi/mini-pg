@@ -328,7 +328,7 @@ public class MiniPgController {
         return miniPGHelper.setRepToAsync(strAppName);
     }
 
-    @RequestMapping(path = "/preparesubscriber", method = RequestMethod.POST)
+    @RequestMapping(path = "/preparesubs", method = RequestMethod.POST)
     public @ResponseBody
     String prepareSubscriberDB(@RequestBody SubscriberDTO subscriberDTO) {
         return miniPGHelper.prepareSubscriberDB(subscriberDTO);

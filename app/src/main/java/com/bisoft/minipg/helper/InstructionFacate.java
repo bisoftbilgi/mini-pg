@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.bisoft.minipg.dto.SubscriberDTO;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -598,6 +600,47 @@ public class InstructionFacate {
 
         return true;
 
+    }
+
+    public boolean createPrepSubscritionScript(final String filename,SubscriberDTO subscriberDTO){
+        try {
+            Path path = Paths.get(filename);
+                if (Files.exists(path)) {
+                    Files.delete(Paths.get(filename)); 
+                }         
+        } catch (IOException e) {
+            log.warn("error on script file delete.");;
+        }
+
+        try {
+
+            // final String pgPassFile = miniPGlocalSetings.getPgPassFile();
+            FileOutputStream fos = new FileOutputStream(filename, false);
+
+            fos.write((miniPGlocalSetings.getPgCtlBinPath()+"psql -c \"CREATE DATABASE "+subscriberDTO.getDatname()
+                            +" ENCODING "+ subscriberDTO.getEncoding()+" LC_COLLATE '"+subscriberDTO.getLc_collate()+"';\"\n").getBytes());
+
+            fos.write((miniPGlocalSetings.getPgCtlBinPath() + "pg_dumpall -h "+subscriberDTO.getPublisherAddress()
+                                                                        +" -p " + subscriberDTO.getPublisherPort()
+                                                                        +" -U " + subscriberDTO.getPublisherPU()
+                                                                        +" --globals-only |"
+                                                                        + miniPGlocalSetings.getPgCtlBinPath()
+                                                                        + "psql\n").getBytes());
+
+            fos.write((miniPGlocalSetings.getPgCtlBinPath() + "pg_dump -h "+ subscriberDTO.getPublisherAddress()
+                                                                        +" -p "+ subscriberDTO.getPublisherPort()
+                                                                        +" -U "+ subscriberDTO.getPublisherPU()
+                                                                        +" -d "+ subscriberDTO.getDatname()
+                                                                        +" --schema-only |"
+                                                                        + miniPGlocalSetings.getPgCtlBinPath() 
+                                                                        + "psql"
+                                                                        + " -d "+ subscriberDTO.getDatname()+"\n").getBytes());
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
     }
 
     public boolean tryStartSyncForRecovery(final String portNumber, final String userName,
