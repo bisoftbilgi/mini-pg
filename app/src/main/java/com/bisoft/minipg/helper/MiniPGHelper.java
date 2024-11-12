@@ -1,6 +1,5 @@
 package com.bisoft.minipg.helper;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,7 +7,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.time.LocalDateTime;
@@ -20,8 +18,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.PostConstruct;
-
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +27,9 @@ import com.bisoft.minipg.PgVersion;
 import com.bisoft.minipg.dto.PromoteDTO;
 import com.bisoft.minipg.dto.ReBaseUpDTO;
 import com.bisoft.minipg.dto.RewindDTO;
+import com.bisoft.minipg.dto.SubscriberDTO;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -809,5 +807,41 @@ public class MiniPGHelper {
             }
         }
         return "OK";
-    }  
+    }
+    
+    public String prepareSubscriberDB(SubscriberDTO subscriberDTO){
+
+        List<String> createdb_result = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c","CREATE DATABASE "+subscriberDTO.getDatname()+" ENCODING "+ subscriberDTO.getEncoding()
+                                                                +" LC_COLLATE '"+subscriberDTO.getLc_collate()+"';");
+
+        if (!((String.join("\n",createdb_result).toUpperCase()).contains("CREATE DATABASE"))){
+            log.info(" Error on CREATE SUBSCRIBER DB, error:"+String.join("\n",createdb_result));
+            return String.join("\n",createdb_result);
+        }
+
+        List<String> dumpall_result = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_dumpall -h " + subscriberDTO.getPublisherAddress() 
+                                                                            +" -p "+ subscriberDTO.getPublisherPort() 
+                                                                            +" --globals-only | "+ miniPGlocalSetings.getPgCtlBinPath() + "psql");
+
+        if ((String.join("\n", dumpall_result).contains("error") || String.join("\n", dumpall_result).contains("fatal"))){
+            log.info(" Error occurrred on altering Pg to Read Only to R/W, error:"+String.join("\n", dumpall_result));
+            return String.join("\n", dumpall_result);
+        } 
+
+        List<String> datDump_result = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "pg_dump -h " + subscriberDTO.getPublisherAddress() 
+                                                                            +" -p "+ subscriberDTO.getPublisherPort() 
+                                                                            +" --schema-only "+subscriberDTO.getDatname()
+                                                                            +" | "
+                                                                            + miniPGlocalSetings.getPgCtlBinPath() + "psql -d "+ subscriberDTO.getDatname());
+
+        if ((String.join("\n", datDump_result).contains("error") || String.join("\n", datDump_result).contains("fatal"))){
+            log.info(" Error occurrred on altering Pg to Read Only to R/W, error:"+String.join("\n", datDump_result));
+            return String.join("\n", datDump_result);
+        } 
+
+        return "OK";
+    }
 }

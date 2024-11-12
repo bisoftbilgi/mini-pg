@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.bisoft.minipg.dto.PromoteDTO;
 import com.bisoft.minipg.dto.ReBaseUpDTO;
 import com.bisoft.minipg.dto.RewindDTO;
+import com.bisoft.minipg.dto.SubscriberDTO;
 import com.bisoft.minipg.helper.CommandExecutor;
 import com.bisoft.minipg.helper.MiniPGHelper;
 import com.bisoft.minipg.helper.MiniPGLocalSettings;
@@ -325,5 +326,12 @@ public class MiniPgController {
     public @ResponseBody
     String setReplicationToAsync(@RequestBody String strAppName) {
         return miniPGHelper.setRepToAsync(strAppName);
+    }
+
+    @RequestMapping(path = "/rebaseUp", method = RequestMethod.POST)
+    public @ResponseBody
+    String rebaseUp(@RequestBody SubscriberDTO subscriberDTO) {
+        log.info("rebaseUp Called...");
+        return miniPGHelper.prepareSubscriberDB(subscriberDTO);
     }
 }
