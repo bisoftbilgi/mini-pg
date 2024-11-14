@@ -739,6 +739,72 @@ public class InstructionFacate {
 
         return (result.size() > 0);
 
-    }  
+    } 
+    
+    
+
+    public boolean createPGInstallScript(final String filename,final int pgMajorVerNum){
+        try {
+            Path path = Paths.get(filename);
+                if (Files.exists(path)) {
+                    Files.delete(Paths.get(filename)); 
+                }         
+        } catch (IOException e) {
+            log.warn("error on script file delete.");;
+        }
+
+        try {
+
+            // final String pgPassFile = miniPGlocalSetings.getPgPassFile();
+            FileOutputStream fos = new FileOutputStream(filename, false);
+
+            fos.write(("if [ -z \"$1\" ]\r\n" + //
+                                "  then\r\n" + //
+                                "    echo \"No argument supplied\"\r\n" + //
+                                "    export pg_version=16\r\n" + //
+                                "else\r\n" + //
+                                "  export pg_version=$1\r\n" + //
+                                "fi\r\n" + //
+                                "\r\n" + //
+                                "echo \"PG-\"$pg_version\" rpm download starting...\"\r\n" + //
+                                "\r\n" + //
+                                "yum install -y perl-libs libxslt wget libicu libpq lz4\r\n" + //
+                                "\r\n" + //
+                                "export os_family=$(cat /etc/os-release |grep ID_LIKE |cut -d \"=\" -f 2 |sed 's/\"//g'|cut -d \" \" -f 1) #rhel\r\n" + //
+                                "export os_version=$(cat /etc/os-release |grep VERSION_ID |cut -d \"=\" -f 2 |sed 's/\"//g'|cut -d \" \" -f 1) #8.8\r\n" + //
+                                "export os_platform=$(uname -m) #x86_64\r\n" + //
+                                "export os_main_stream=$([[ \"$os_family\" == \"rhel\"  ]] && echo \"redhat\" || echo \"$os_family\")\r\n" + //
+                                "\r\n" + //
+                                "\r\n" + //
+                                "export last_postgres_rpm=$(curl -s -f -L https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/#files |grep  postgresql$pg_version-$pg_version |sort -b -k2.24,2.25n |tail -n 1 | grep -oP 'href=\"\\K[^\"]+')\r\n" + //
+                                "wget https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/$last_postgres_rpm\r\n" + //
+                                "\r\n" + //
+                                "export last_lib_rpm=$(curl -s -f -L https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/#files |grep  postgresql$pg_version-lib |sort -b -k2.24,2.25n |tail -n 1 | grep -oP 'href=\"\\K[^\"]+')\r\n" + //
+                                "wget https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/$last_lib_rpm\r\n" + //
+                                "\r\n" + //
+                                "export last_server_rpm=$(curl -s -f -L https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/#files |grep  postgresql$pg_version-server |sort -b -k2.24,2.25n |tail -n 1 | grep -oP 'href=\"\\K[^\"]+')\r\n" + //
+                                "wget https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/$last_server_rpm\r\n" + //
+                                "\r\n" + //
+                                "export last_contrib_rpm=$(curl -s -f -L https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/#files |grep  postgresql$pg_version-contrib |sort -b -k2.24,2.25n |tail -n 1 | grep -oP 'href=\"\\K[^\"]+')\r\n" + //
+                                "wget https://download.postgresql.org/pub/repos/yum/$pg_version/$os_main_stream/$os_family-$os_version-$os_platform/$last_contrib_rpm\r\n" + //
+                                "\r\n" + //
+                                "rpm -ivh $last_lib_rpm $last_postgres_rpm $last_server_rpm $last_contrib_rpm\r\n" + //
+                                "\r\n" + //
+                                "mkdir -p /pgdata/$pg_version/data\r\n" + //
+                                "chown -R postgres:postgres /pgdata\r\n" + //
+                                "export PGDATA=/pgdata/$pg_version/data\r\n" + //
+                                "export content=$(</usr/lib/systemd/system/postgresql-${pg_version}.service)\r\n" + //
+                                "echo \"${content/\"var/lib/pgsql\"/pgdata}\" > /usr/lib/systemd/system/postgresql-$pg_version.service\r\n" + //
+                                "/usr/bin/postgresql-$pg_version-setup initdb\r\n" + //
+                                "systemctl start postgresql-$pg_version\r\n" + //
+                                "").getBytes());
+
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
+    }
 
 }
