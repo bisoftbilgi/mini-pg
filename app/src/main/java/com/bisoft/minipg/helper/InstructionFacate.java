@@ -317,16 +317,13 @@ public class InstructionFacate {
                 e.printStackTrace();
             }
         }
-        // open
-        boolean result = true;
-        for (String cell : cellValues) {
-            if (cell.contains("No such file or directory")) {
-                result = false;
-                return null;
-            } 
-        }
+        
+        if ((String.join(" ",cellValues).toLowerCase().contains("pg_rewind: done!")) 
+            || (String.join(" ",cellValues).toLowerCase().contains("pg_rewind: no rewind required"))) {
+                return Boolean.TRUE;
+            }
 
-        return result;
+        return Boolean.FALSE;
     }
 
     private boolean rewindContinues() {
