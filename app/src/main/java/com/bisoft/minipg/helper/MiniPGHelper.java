@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -514,9 +516,20 @@ public class MiniPGHelper {
                 // }
             } else {
                 List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
                     "-D" , miniPGlocalSetings.getPostgresDataPath());
+
+                cellValues = (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
+                    "-D" , miniPGlocalSetings.getPostgresDataPath());
+
+                cellValues = (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", 
+                    "-D" , miniPGlocalSetings.getPostgresDataPath());
+
                 log.info("Server Start Result:"+ String.join("\n", cellValues));
+
+
                 // if (!(cellValues.contains("server started"))){
                 //         return null;
                 //     }    
@@ -693,6 +706,52 @@ public class MiniPGHelper {
         
         return "OK";
     }  
+
+    public String fixApplicationName(){
+        String hostname = "";
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        if (hostname == " " || hostname == null){
+            String[] cmd = {"hostname"};
+            try {
+                hostname = new BufferedReader(
+                    new InputStreamReader(Runtime.getRuntime().exec(cmd).getInputStream()))
+                   .readLine();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        List<String> connstr = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-t", "-A", "-c", "show primary_conninfo");
+        String strConnInfo = connstr.get(0);
+
+        if (!strConnInfo.contains(hostname)){
+            strConnInfo =  strConnInfo + " application_name=" + hostname;
+            strConnInfo = strConnInfo.replace("'","''");
+            List<String> result = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c", "ALTER SYSTEM SET primary_conninfo='"+strConnInfo+"'");
+            result.addAll((new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c", "SELECT pg_reload_conf()")); 
+    
+            for (String cell : result) {
+                if (cell.contains("no such file")) {
+                    return null;
+                } else if (cell.contains("error") || cell.contains("ERROR") 
+                            || cell.contains("fatal") || cell.contains("FATAL")){
+                    return null;
+                }
+            }
+        }
+        
+        return "OK";
+    } 
 
     public String setRepToSync(String strAppName){       
         List<String> currvalue = (new CommandExecutor()).executeCommandSync(
