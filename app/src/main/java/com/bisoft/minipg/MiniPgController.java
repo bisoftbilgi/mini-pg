@@ -315,6 +315,12 @@ public class MiniPgController {
         return miniPGHelper.setApplicationName(strAppName);
     }
 
+    @RequestMapping(path = "/fixappname", method = RequestMethod.GET)
+    public @ResponseBody
+    String fixApplicationName() {
+        return miniPGHelper.fixApplicationName();
+    }
+    
     @RequestMapping(path = "/setsync", method = RequestMethod.POST)
     public @ResponseBody
     String setReplicationToSync(@RequestBody String strAppName) {
