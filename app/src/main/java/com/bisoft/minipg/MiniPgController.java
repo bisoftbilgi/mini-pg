@@ -177,6 +177,24 @@ public class MiniPgController {
     @RequestMapping(path = "/vip-down", method = RequestMethod.GET)
     public @ResponseBody
     String vipDown() throws Exception {
+        ArrayList<String> serverIPAddress = new ArrayList<String>();
+
+        try {
+            Enumeration<NetworkInterface> enum_netifaces = NetworkInterface.getNetworkInterfaces();
+            while( enum_netifaces.hasMoreElements()){
+                for ( InterfaceAddress iface_addr : enum_netifaces.nextElement().getInterfaceAddresses())
+                    if ( iface_addr.getAddress().toString().contains(".") && iface_addr.getAddress().toString() !="127.0.0.1")
+                    serverIPAddress.add(iface_addr.getAddress().toString().replace("/",""));
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+
+        if (!(serverIPAddress.contains(miniPGlocalSetings.getVipIp()))){
+            log.info("VIP Network checked.OK.");
+            return "OK";
+        } 
+
         StringBuilder result = new StringBuilder();
         String[] cmd = {"/bin/bash", "-c", "sudo ip address del " + miniPGlocalSetings.getVipIp() + "/" + miniPGlocalSetings.getVipIpNetmask()
                         +" dev "+ miniPGlocalSetings.getVipInterface()};
