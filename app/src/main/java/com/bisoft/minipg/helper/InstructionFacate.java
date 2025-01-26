@@ -337,6 +337,7 @@ public class InstructionFacate {
     public boolean checkReplication(final String masterAddress, final String port, final String userName, final String password) {
 
         List<String> result = localSqlExecutor.retrieveLocalSqlResult("Select sender_host ||':'||sender_port master_address from pg_stat_wal_receiver;", port, userName,password);
+        log.info("Replication Check Result:" + String.join(" ",result));
         for (String address : result){
             if ((masterAddress+":"+port).equals(address)){
                 return Boolean.TRUE;
