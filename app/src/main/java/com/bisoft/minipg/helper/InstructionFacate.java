@@ -12,6 +12,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -336,13 +337,20 @@ public class InstructionFacate {
 
     public boolean checkReplication(final String masterAddress, final String port, final String userName, final String password) {
 
-        List<String> result = localSqlExecutor.retrieveLocalSqlResult("Select sender_host ||':'||sender_port master_address from pg_stat_wal_receiver;", port, userName,password);
-        log.info("Replication Check Result:" + String.join(" ",result));
-        for (String address : result){
-            if ((masterAddress+":"+port).equals(address)){
+        for (int tryC = 0; tryC < 3; tryC++) {
+            List<String> result = localSqlExecutor.retrieveLocalSqlResult("Select sender_host ||':'||sender_port master_address from pg_stat_wal_receiver;", port, userName,password);
+            log.info("Try: "+tryC+" Replication Check Result:" + String.join(" ",result));
+            if (String.join(" ",result).contains(masterAddress+":"+port)){
                 return Boolean.TRUE;
             }
-        }
+            try {
+                log.info("Wait 3 Sec to replication reCheck.");
+                TimeUnit.SECONDS.sleep(3);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }         
+        } 
+        
         return Boolean.FALSE;
     }
 
