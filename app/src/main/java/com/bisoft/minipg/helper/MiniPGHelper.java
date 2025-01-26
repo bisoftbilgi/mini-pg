@@ -498,7 +498,7 @@ public class MiniPGHelper {
                     "-D", miniPGlocalSetings.getPostgresDataPath() ,
                     "-o" , 
                     "\"--config-file="+pgconf_file_fullpath+"\"");
-                log.info("Server Start Result:"+ String.join("\n", cellValues));
+                // log.info("Server Start Result:"+ String.join("\n", cellValues));
                     // if (!(cellValues.contains("server started"))){
                 //     return null;
                 // }
@@ -515,7 +515,7 @@ public class MiniPGHelper {
                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", 
                     "-D" , miniPGlocalSetings.getPostgresDataPath());
 
-                log.info("Server Start Result:"+ String.join("\n", cellValues));
+                // log.info("Server Start Result:"+ String.join("\n", cellValues));
 
 
                 // if (!(cellValues.contains("server started"))){
