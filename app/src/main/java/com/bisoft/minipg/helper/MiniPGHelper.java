@@ -329,7 +329,7 @@ public class MiniPGHelper {
                     List<String> result_script = (new CommandExecutor()).executeCommandSync(
                     "/bin/bash", filename);
 
-                    if ((result_script.toString()).contains("No space left on device")){
+                    if ((String.join(" ", result_script).toLowerCase()).contains("no space left on device")){
                         (new CommandExecutor()).executeCommandSync("/bin/bash",
                                                                             "-c",
                                                                             "\"rm -rf "+
@@ -337,8 +337,8 @@ public class MiniPGHelper {
                                                                                         miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
                                                                                         miniPGlocalSetings.getPostgresDataPath() +"_*")
                                                                                         + "\"");
-                    }else if((result_script.toString()).contains("no pg_hba.conf entry")){
-                        return "pg_basebackup FAILED. Possible Reason :" + result_script.toString();
+                    }else if((String.join(" ", result_script).toLowerCase()).contains("no pg_hba.conf entry")){
+                        return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
                     }
 
                     // 2.3 start the server
