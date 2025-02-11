@@ -36,9 +36,6 @@ public class InstructionFacate {
     private final InstructionUtil     instructionUtil;
     private Logger logger = LoggerFactory.getLogger(InstructionFacate.class);
 
-    @Value("${minipg.pgconf_file_fullpath:/etc/postgresql/16/main/postgresql.conf}")
-    private String pgconf_file_fullpath;
-
     private final String osDistro = System.getProperties().getProperty("java.vm.vendor", "unknown");
 
     public List<String> pgCtlStop() {
@@ -58,7 +55,7 @@ public class InstructionFacate {
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D", miniPGlocalSetings.getPostgresDataPath() ,
                 "-o" , 
-                "\"--config-file="+pgconf_file_fullpath+"\"");
+                "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
                 return cellValues;
 
         } else {
@@ -363,7 +360,7 @@ public class InstructionFacate {
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D", miniPGlocalSetings.getPostgresDataPath() ,
                 "-o" , 
-                "\"--config-file="+pgconf_file_fullpath+"\"");
+                "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
 
             for (String cell : interResult) {
                 log.info("pg_ctl start command result:", cell);
@@ -460,9 +457,6 @@ public class InstructionFacate {
 
     public boolean createRewindScript(final String filename,final String masterIp,
                                       final String repUser,final String repPassword,final String masterPort){
-        /*
-        psql -c "checkpoint"
-         */
         try {
             if (Paths.get(filename).toFile().isFile()){
                 Files.delete(Paths.get(filename));
@@ -487,7 +481,7 @@ public class InstructionFacate {
                 fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\"\n"
                     .replace("{PG_DATA}",pgData)
                     .replace("{PG_BIN_PATH}",pgCtlBinPath)
-                    .replace("{PG_CONF_FILE_FULLPATH}", pgconf_file_fullpath).getBytes());
+                    .replace("{PG_CONF_FILE_FULLPATH}", miniPGlocalSetings.getPgconf_file_fullpath()).getBytes());
             } else {
                 fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
                 .replace("{PG_DATA}",pgData)
@@ -535,7 +529,7 @@ public class InstructionFacate {
                 fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\"\n"
                     .replace("{PG_DATA}",pgData)
                     .replace("{PG_BIN_PATH}",pgCtlBinPath)
-                    .replace("{PG_CONF_FILE_FULLPATH}", pgconf_file_fullpath).getBytes());
+                    .replace("{PG_CONF_FILE_FULLPATH}", miniPGlocalSetings.getPgconf_file_fullpath()).getBytes());
             } else {
                 fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
                 .replace("{PG_DATA}",pgData)
@@ -551,7 +545,7 @@ public class InstructionFacate {
                 fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\"\n"
                     .replace("{PG_DATA}",pgData)
                     .replace("{PG_BIN_PATH}",pgCtlBinPath)
-                    .replace("{PG_CONF_FILE_FULLPATH}", pgconf_file_fullpath).getBytes());
+                    .replace("{PG_CONF_FILE_FULLPATH}", miniPGlocalSetings.getPgconf_file_fullpath()).getBytes());
             } else {
                 fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
                 .replace("{PG_DATA}",pgData)
@@ -616,7 +610,7 @@ public class InstructionFacate {
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D", miniPGlocalSetings.getPostgresDataPath() ,
                 "-o" , 
-                "\"--config-file="+pgconf_file_fullpath+"\"");
+                "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
             for (String cell : interResult) {
                 if (cell.contains("done")) {
                     result = true;

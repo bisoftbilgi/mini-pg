@@ -18,6 +18,12 @@ public class MiniPGLocalSettings {
     @Value("${minipg.postgres_data_path:/var/lib/postgres/12/data/}")
     private String postgresDataPath;
 
+    @Value("${minipg.pg_port:5432}")
+    private String pg_port;
+
+    @Value("${minipg.pgconf_file_fullpath:/etc/postgresql/16/main/postgresql.conf}")
+    private String pgconf_file_fullpath;
+
     @Value("${minipg.os:linux}")
     private String os;
 

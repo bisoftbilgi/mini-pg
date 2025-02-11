@@ -11,7 +11,6 @@ import java.util.Enumeration;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,9 +38,6 @@ public class MiniPgController {
     private final MiniPGHelper miniPGHelper;
     private final SymmetricEncryptionUtil symmetricEncryptionUtil;
 
-    @Value("${minipg.pgconf_file_fullpath:/etc/postgresql/16/main/postgresql.conf}")
-    private String pgconf_file_fullpath;
-
     private final String osDistro = System.getProperties().getProperty("java.vm.vendor", "unknown");
 
     @RequestMapping("/status")
@@ -54,7 +50,7 @@ public class MiniPgController {
     public @ResponseBody
     String checkpoint() {
         List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql", "-c", "CHECKPOINT;");
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), "-c", "CHECKPOINT;");
         return cellValues.toString();
     }
 
@@ -98,7 +94,7 @@ public class MiniPgController {
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D", miniPGlocalSetings.getPostgresDataPath() ,
                 "-o" , 
-                "\"--config-file="+pgconf_file_fullpath+"\"");
+                "\"--config-file="+ miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
                 return cellValues;
 
         } else {
@@ -138,7 +134,7 @@ public class MiniPgController {
     public @ResponseBody
     String executeSQL(@RequestBody String sql) throws Exception {
         StringBuilder result = new StringBuilder();
-        String[] cmd = {miniPGlocalSetings.getPgCtlBinPath()+"psql", "-c", "\"" + sql +"\""};
+        String[] cmd = {miniPGlocalSetings.getPgCtlBinPath()+"psql","-p",miniPGlocalSetings.getPg_port(), "-c", "\"" + sql +"\""};
         for (String line : cmd) {
             result.append(line + "\n");
             log.info(line);
