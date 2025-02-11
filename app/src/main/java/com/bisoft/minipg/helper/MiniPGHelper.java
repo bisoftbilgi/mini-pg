@@ -13,6 +13,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
+import org.apache.commons.io.FileSystemUtils;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
 import com.bisoft.minipg.PgVersion;
@@ -294,30 +298,59 @@ public class MiniPGHelper {
                     "-D" + miniPGlocalSetings.getPostgresDataPath(),
                     "-mi");
 
-            
+            long pgDataSize = FileUtils.sizeOfDirectory(new File(miniPGlocalSetings.getPostgresDataPath()));
+            long freeSpace = 0;
+            try {
+                freeSpace = Files.getFileStore(Paths.get(miniPGlocalSetings.getPostgresDataPath().substring(0,miniPGlocalSetings.getPostgresDataPath().indexOf("/", 1)) )).getUsableSpace();
+            } catch (IOException e) {                
+                e.printStackTrace();
+                log.warn("Can not get available size on disk "+ miniPGlocalSetings.getPgCtlBinPath());
+            }
+
+            log.info("Data dir Size : " + Long.valueOf(pgDataSize).toString());
+            log.info("Free Size on Disk : " + Long.valueOf(freeSpace).toString());
+
             // 2. rejoin to cluster with pg_basebackup
             log.info(String.valueOf(logNumber++)+". step : rejoining with pg_basebackup..");
             try {
-                // 2.1. move broken data folder and backup
-                LocalDateTime ldateTime = LocalDateTime.now();
-                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+                
+                if (freeSpace > pgDataSize){
 
-                String formattedDate = ldateTime.format(dateFormatter);
-                String newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"data"+"\\b", "data_"+formattedDate);
-                if (osDistro.equals("Ubuntu")){
-                    newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"main"+"\\b", "main_"+formattedDate);
-                }
+                    LocalDateTime ldateTime = LocalDateTime.now();
+                    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
 
-                File f = new File(miniPGlocalSetings.getPostgresDataPath());
-                if (f.exists() && f.isDirectory()) {
-                    log.info(String.valueOf(logNumber++)+". step : move broken data directory with new name:", newDataDirFullPath);
-                    (new ScriptExecutor()).executeScript(
-                            "mv", 
-                            miniPGlocalSetings.getPostgresDataPath(),
-                            newDataDirFullPath);
+                    String formattedDate = ldateTime.format(dateFormatter);
+                    String newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"data"+"\\b", "data_"+formattedDate);
+                    if (osDistro.equals("Ubuntu")){
+                        newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"main"+"\\b", "main_"+formattedDate);
+                    }
+
+                    File f = new File(miniPGlocalSetings.getPostgresDataPath());
+                    if (f.exists() && f.isDirectory()) {
+                        log.info(String.valueOf(logNumber++)+". step : move broken data directory with new name:", newDataDirFullPath);
+                        (new ScriptExecutor()).executeScript(
+                                "mv", 
+                                miniPGlocalSetings.getPostgresDataPath(),
+                                newDataDirFullPath);
+                    } else {
+                        log.info("data dir not found:"+miniPGlocalSetings.getPostgresDataPath());
+                    }
+
                 } else {
-                    log.info("data dir not found:"+miniPGlocalSetings.getPostgresDataPath());
+                    log.info("There is no space for data directory back on disk "+ miniPGlocalSetings.getPostgresDataPath().substring(0,miniPGlocalSetings.getPostgresDataPath().indexOf("/", 1)));
+                    log.info("Passing data directory backup..Removing broken data directory!!!");
+                    (new CommandExecutor()).executeCommandSync("/bin/bash",
+                                                                            "-c",
+                                                                            "rm -rf "+  miniPGlocalSetings.getPostgresDataPath());
+                    (new CommandExecutor()).executeCommandSync("/bin/bash",
+                                                                            "-c",
+                                                                            "rm -rf "+
+                                                                            (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
+                                                                                        miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
+                                                                                        miniPGlocalSetings.getPostgresDataPath() +"_*"));
+
                 }
+                
 
                 try {
                     //2.2 copy master db with pg_basebackup
@@ -330,13 +363,7 @@ public class MiniPGHelper {
                     "/bin/bash", filename);
 
                     if ((String.join(" ", result_script).toLowerCase()).contains("no space left on device")){
-                        (new CommandExecutor()).executeCommandSync("/bin/bash",
-                                                                            "-c",
-                                                                            "\"rm -rf "+
-                                                                            (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
-                                                                                        miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
-                                                                                        miniPGlocalSetings.getPostgresDataPath() +"_*")
-                                                                                        + "\"");
+                        return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
                     }else if((String.join(" ", result_script).toLowerCase()).contains("no pg_hba.conf entry")){
                         return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
                     }
@@ -367,11 +394,7 @@ public class MiniPGHelper {
 
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    (new ScriptExecutor()).executeScript(
-                        "mv", 
-                        newDataDirFullPath,
-                        miniPGlocalSetings.getPostgresDataPath());
-                        return null;
+                    return null;
                 }
             } 
             catch (Exception ex) {
