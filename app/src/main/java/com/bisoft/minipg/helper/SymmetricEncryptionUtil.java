@@ -22,7 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @RequiredArgsConstructor
 public class SymmetricEncryptionUtil {
 
-    @Value("${bfm.approval-key:123456}")
+    @Value("${bfm.approval-key:B1s0ft25}")
     public String approvalSecretKey;
 
     @Value("${bfm.user-crypted:false}")
