@@ -1,8 +1,8 @@
 Package: MiniPG
-Version: 2.3.0
+Version: 3.1.2
 Section: misc
 Priority: normal
 Architecture: all
 Description: [[description]]
 Maintainer: Bisoft <dba@bisoft>
-Depends: default-jre | java11-runtime
+Depends: default-jre | java21-runtime
