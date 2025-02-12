@@ -371,34 +371,47 @@ public class MiniPGHelper {
                     // 2.3 start the server
                     log.info(String.valueOf(logNumber++)+". step : start server");
                     if (osDistro.equals("Ubuntu")){
-                        List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                        (new CommandExecutor()).executeCommandSync(
+                            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
                             "-D", miniPGlocalSetings.getPostgresDataPath() ,
                             "-o" , 
                             "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath() +"\"");
-        
-                        if (!(cellValues.contains("server started"))){
-                            return null;
-                        }
-                        // if (cellValues.contains("server did not start in time")){
-                        // }
-                    } else {
-                        List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                            "-D" , miniPGlocalSetings.getPostgresDataPath());
                         
-                        if (!(cellValues.contains("server started"))){
-                                return null;
-                            }    
-                    }        
+                        (new CommandExecutor()).executeCommandSync(
+                                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
+                                "-D" , miniPGlocalSetings.getPostgresDataPath());
 
+                        (new CommandExecutor()).executeCommandSync(
+                                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                                    "-D", miniPGlocalSetings.getPostgresDataPath() ,
+                                    "-o" , 
+                                    "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath() +"\"");                                
+        
+                    } else {
+                        (new CommandExecutor()).executeCommandSync(
+                            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                            "-D" , miniPGlocalSetings.getPostgresDataPath());
+
+                        (new CommandExecutor()).executeCommandSync(
+                                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
+                                "-D" , miniPGlocalSetings.getPostgresDataPath());
+            
+                        (new CommandExecutor()).executeCommandSync(
+                                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", 
+                                "-D" , miniPGlocalSetings.getPostgresDataPath());                            
+                         
+                    }
+                    
+                    Boolean isReplicationUp  = instructionFacate.checkReplication(rebaseUpDTO.getMasterIp(), rebaseUpDTO.getMasterPort(), rebaseUpDTO.getRepUser(), rebaseUpDTO.getRepPassword());
+                    if ( isReplicationUp == Boolean.FALSE){
+                        return null;
+                    }
+                    return "OK";
                 } catch (Exception ex) {
-                    ex.printStackTrace();
                     return null;
                 }
             } 
             catch (Exception ex) {
-                ex.printStackTrace();
                 return null;
             }            
         }
@@ -473,25 +486,32 @@ public class MiniPGHelper {
 
             log.info(String.valueOf(logNumber++)+". step : start server");
             if (osDistro.equals("Ubuntu")){
-                List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+                (new CommandExecutor()).executeCommandSync(
                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                     "-D", miniPGlocalSetings.getPostgresDataPath() ,
                     "-o" , 
                     "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
-                // log.info("Server Start Result:"+ String.join("\n", cellValues));
-                    // if (!(cellValues.contains("server started"))){
-                //     return null;
-                // }
-            } else {
-                List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                    "-D" , miniPGlocalSetings.getPostgresDataPath());
 
-                cellValues = (new CommandExecutor()).executeCommandSync(
+                (new CommandExecutor()).executeCommandSync(
                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
                     "-D" , miniPGlocalSetings.getPostgresDataPath());
 
-                cellValues = (new CommandExecutor()).executeCommandSync(
+                (new CommandExecutor()).executeCommandSync(
+                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                        "-D", miniPGlocalSetings.getPostgresDataPath() ,
+                        "-o" , 
+                        "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
+                        
+            } else {
+                (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+                    "-D" , miniPGlocalSetings.getPostgresDataPath());
+
+                (new CommandExecutor()).executeCommandSync(
+                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
+                    "-D" , miniPGlocalSetings.getPostgresDataPath());
+
+                (new CommandExecutor()).executeCommandSync(
                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", 
                     "-D" , miniPGlocalSetings.getPostgresDataPath());
 
