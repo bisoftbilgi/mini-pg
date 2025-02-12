@@ -381,12 +381,12 @@ public class MiniPGHelper {
                                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
                                 "-D" , miniPGlocalSetings.getPostgresDataPath());
 
-                        (new CommandExecutor()).executeCommandSync(
+                        List<String> start_result = (new CommandExecutor()).executeCommandSync(
                                     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
                                     "-D", miniPGlocalSetings.getPostgresDataPath() ,
                                     "-o" , 
                                     "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath() +"\"");                                
-        
+                        log.info("Start Result : "+ String.join(" ", start_result));
                     } else {
                         (new CommandExecutor()).executeCommandSync(
                             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
@@ -396,9 +396,10 @@ public class MiniPGHelper {
                                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
                                 "-D" , miniPGlocalSetings.getPostgresDataPath());
             
-                        (new CommandExecutor()).executeCommandSync(
+                        List<String> start_result = (new CommandExecutor()).executeCommandSync(
                                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", 
-                                "-D" , miniPGlocalSetings.getPostgresDataPath());                            
+                                "-D" , miniPGlocalSetings.getPostgresDataPath()); 
+                        log.info("Start Result : "+ String.join(" ", start_result));
                          
                     }
                     
