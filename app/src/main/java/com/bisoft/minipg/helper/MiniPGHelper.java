@@ -361,7 +361,7 @@ public class MiniPGHelper {
                     
                     List<String> result_script = (new CommandExecutor()).executeCommandSync(
                     "/bin/bash", filename);
-
+                    log.info("Rejoin Script output:" + (String.join(" ", result_script)));
                     if ((String.join(" ", result_script).toLowerCase()).contains("no space left on device")){
                         return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
                     }else if((String.join(" ", result_script).toLowerCase()).contains("no pg_hba.conf entry")){
