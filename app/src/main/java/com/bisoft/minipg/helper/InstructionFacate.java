@@ -583,9 +583,9 @@ public class InstructionFacate {
 
             fos.write("export PGPASSWORD={REPLICATION_PASSWORD}\n".replace("{REPLICATION_PASSWORD}",repPassword).getBytes());
 
-            fos.write("bash -c \"{PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}\"\n"
+            fos.write("/bin/bash -c \"{PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}\"\n"
                     .replace("{PG_DATA}",pgData)
-                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{PG_BIN_PATH}",(pgCtlBinPath.endsWith("/") ? pgCtlBinPath.substring(0, pgCtlBinPath.length()-1) : pgCtlBinPath ))
                     .replace("{MASTER_IP}",masterIp)
                     .replace("{MASTER_PORT}",masterPort)
                     .replace("{REPLICATION_USER}",repUser).getBytes());
