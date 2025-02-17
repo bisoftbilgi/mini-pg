@@ -314,40 +314,50 @@ public class MiniPGHelper {
             log.info(String.valueOf(logNumber++)+". step : rejoining with pg_basebackup..");
             try {
                 
-                if (freeSpace > pgDataSize){
+                if (freeSpace > (pgDataSize*2)){
 
-                    LocalDateTime ldateTime = LocalDateTime.now();
-                    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+                    // LocalDateTime ldateTime = LocalDateTime.now();
+                    // DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
 
-                    String formattedDate = ldateTime.format(dateFormatter);
-                    String newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"data"+"\\b", "data_"+formattedDate);
+                    // String formattedDate = ldateTime.format(dateFormatter);
+                    // String newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"data"+"\\b", "data_"+formattedDate);
+                    // if (osDistro.equals("Ubuntu")){
+                    //     newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"main"+"\\b", "main_"+formattedDate);
+                    // }
+
+                    String newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"data"+"\\b", "data_old");
                     if (osDistro.equals("Ubuntu")){
-                        newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"main"+"\\b", "main_"+formattedDate);
+                        newDataDirFullPath = miniPGlocalSetings.getPostgresDataPath().replaceAll("\\b"+"main"+"\\b", "main_old");
+                    }
+                    File data_backup = new File(newDataDirFullPath);
+
+                    if (!(data_backup.exists())){
+                        File dataFolder = new File(miniPGlocalSetings.getPostgresDataPath());
+                        if (dataFolder.exists() && dataFolder.isDirectory()) {
+                            log.info(String.valueOf(logNumber++)+". step : move broken data directory with new name:", newDataDirFullPath);
+                            (new ScriptExecutor()).executeScript(
+                                    "mv", 
+                                    miniPGlocalSetings.getPostgresDataPath(),
+                                    newDataDirFullPath);
+                        } else {
+                            log.info("data dir not found:"+miniPGlocalSetings.getPostgresDataPath());
+                        }
                     }
 
-                    File f = new File(miniPGlocalSetings.getPostgresDataPath());
-                    if (f.exists() && f.isDirectory()) {
-                        log.info(String.valueOf(logNumber++)+". step : move broken data directory with new name:", newDataDirFullPath);
-                        (new ScriptExecutor()).executeScript(
-                                "mv", 
-                                miniPGlocalSetings.getPostgresDataPath(),
-                                newDataDirFullPath);
-                    } else {
-                        log.info("data dir not found:"+miniPGlocalSetings.getPostgresDataPath());
-                    }
+                    
 
                 } else {
                     log.info("There is no space for data directory back on disk "+ miniPGlocalSetings.getPostgresDataPath().substring(0,miniPGlocalSetings.getPostgresDataPath().indexOf("/", 1)));
-                    log.info("Passing data directory backup..Removing broken data directory!!!");
-                    (new CommandExecutor()).executeCommandSync("/bin/bash",
-                                                                            "-c",
-                                                                            "rm -rf "+  miniPGlocalSetings.getPostgresDataPath());
-                    (new CommandExecutor()).executeCommandSync("/bin/bash",
-                                                                            "-c",
-                                                                            "rm -rf "+
-                                                                            (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
-                                                                                        miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
-                                                                                        miniPGlocalSetings.getPostgresDataPath() +"_*"));
+                    // log.info("Passing data directory backup..Removing broken data directory!!!");
+                    // (new CommandExecutor()).executeCommandSync("/bin/bash",
+                    //                                                         "-c",
+                    //                                                         "rm -rf "+  miniPGlocalSetings.getPostgresDataPath());
+                    // (new CommandExecutor()).executeCommandSync("/bin/bash",
+                    //                                                         "-c",
+                    //                                                         "rm -rf "+
+                    //                                                         (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
+                    //                                                                     miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
+                    //                                                                     miniPGlocalSetings.getPostgresDataPath() +"_*"));
 
                 }
                 
@@ -418,6 +428,17 @@ public class MiniPGHelper {
         }
 
         return "OK";
+    }
+
+    public String cleanOldBackups(){
+        List<String> result = (new CommandExecutor()).executeCommandSync("/bin/bash",
+                                                                            "-c",
+                                                                            "rm -rf "+
+                                                                            (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
+                                                                                        miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
+                                                                                        miniPGlocalSetings.getPostgresDataPath() +"_*"));
+        return String.join(" ", result);
+
     }
 
     public String doRewind(RewindDTO rewindDTO) {
