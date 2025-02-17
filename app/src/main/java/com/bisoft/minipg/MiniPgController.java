@@ -86,6 +86,13 @@ public class MiniPgController {
         return miniPGHelper.doReBaseUp(rebaseUpDTO);
     }
 
+    @RequestMapping(path = "/cleanOldBackups", method = RequestMethod.GET)
+    public @ResponseBody
+    String cleanOldBackups() {
+        log.info("Old backup clean started..");
+        return miniPGHelper.cleanOldBackups();
+    }
+
     @RequestMapping(path = "/start", method = RequestMethod.GET)
     public @ResponseBody
     List<String> start() {

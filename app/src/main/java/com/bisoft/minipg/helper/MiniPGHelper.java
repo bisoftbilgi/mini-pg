@@ -437,8 +437,8 @@ public class MiniPGHelper {
                                                                             (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
                                                                                         miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
                                                                                         miniPGlocalSetings.getPostgresDataPath() +"_*"));
+        log.info(String.join(" ", result));
         return String.join(" ", result);
-
     }
 
     public String doRewind(RewindDTO rewindDTO) {
