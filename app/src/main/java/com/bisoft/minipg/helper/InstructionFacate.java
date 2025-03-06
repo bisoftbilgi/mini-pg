@@ -582,7 +582,7 @@ public class InstructionFacate {
             FileOutputStream fos = new FileOutputStream(filename, false);
 
             fos.write("export PGPASSWORD={REPLICATION_PASSWORD}\n".replace("{REPLICATION_PASSWORD}",repPassword).getBytes());
-
+            fos.write("rm -rf {PG_DATA}\n".replace("{PG_DATA}",pgData).getBytes());
             fos.write("/bin/bash -c \"{PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}\"\n"
                     .replace("{PG_DATA}",pgData)
                     .replace("{PG_BIN_PATH}",(pgCtlBinPath.endsWith("/") ? pgCtlBinPath.substring(0, pgCtlBinPath.length()-1) : pgCtlBinPath ))
