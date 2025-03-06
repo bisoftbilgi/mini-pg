@@ -6,3 +6,4 @@ Architecture: all
 Description: [[description]]
 Maintainer: Bisoft <dba@bisoft>
 Depends: default-jre | java21-runtime
+
