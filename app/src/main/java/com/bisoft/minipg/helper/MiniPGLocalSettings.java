@@ -39,6 +39,9 @@ public class MiniPGLocalSettings {
     @Value("${application.replication-user:postgres}")
     private String replicationUser;
 
+    @Value("${application.management-db:postgres}")
+    private String managementDB;
+
     @Value("${application.vip-interface:eth0}")
     private String vipInterface;
 
