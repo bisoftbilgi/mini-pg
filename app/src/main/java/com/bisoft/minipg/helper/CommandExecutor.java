@@ -25,7 +25,7 @@ public class CommandExecutor {
 
     public List<String> executeCommandSync(String... args) {
 
-        log.info("EXECUTING THIS:" + String.join(" ", args));
+        // log.info("EXECUTING THIS:" + String.join(" ", args));
         //log.trace("sync command executing : ", String.join(" ", args));
         Process p;
         List<String> cellValues = new ArrayList<>();
