@@ -89,7 +89,7 @@ public class MiniPgController {
     @RequestMapping(path = "/cleanOldBackups", method = RequestMethod.GET)
     public @ResponseBody
     String cleanOldBackups() {
-        log.info("Old backup clean started..");
+        // log.info("Old backup clean started..");
         return miniPGHelper.cleanOldBackups();
     }
 
