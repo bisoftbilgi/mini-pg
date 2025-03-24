@@ -67,8 +67,8 @@ public class MiniPGHelper {
 
         List<String> wal_log_result = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath()+"psql","-p",miniPGlocalSetings.getPg_port(),
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "--no-align", "-c", "show wal_log_hints");
         
         if ((wal_log_result.get(0).toString()).equals("off")){
@@ -77,8 +77,8 @@ public class MiniPGHelper {
 
         List<String> arcmode_result = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath()+"psql","-p",miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "--no-align", "-c", "show archive_mode");
         
             if ((arcmode_result.get(0).toString()).equals("off")){
@@ -87,8 +87,8 @@ public class MiniPGHelper {
 
         List<String> arcCommand_result = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath()+"psql","-p",miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                        "-U",miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "--no-align", "-c", "show archive_command");
         
             if ((arcCommand_result.get(0).toString()).equals("(disabled)") || (arcCommand_result.get(0).toString()).equals("/bin/true")){
@@ -96,9 +96,9 @@ public class MiniPGHelper {
             }
 
         List<String> restCommand_result = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath()+"psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath()+"psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U",miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "--no-align", "-c", "show restore_command");
         
             if ((restCommand_result.get(0).toString()).equals("")){
@@ -130,9 +130,9 @@ public class MiniPGHelper {
 
     public String prepareForSwitchOver(){
         List<String> result_ro = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-c","ALTER SYSTEM SET default_transaction_read_only TO on;");
 
         if ((result_ro.toString()).contains("error") || (result_ro.toString()).contains("fatal")){
@@ -141,9 +141,9 @@ public class MiniPGHelper {
         } 
 
         List<String> result_reload = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+ miniPGlocalSetings.getPg_port(),
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(), 
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p", miniPGlocalSetings.getPg_port(),
+                                                            "-U", miniPGlocalSetings.getReplicationUser(),
+                                                            "-d", miniPGlocalSetings.getManagementDB(), 
                                                             "-c","SELECT pg_reload_conf();");
 
         if ((result_reload.toString()).contains("error") || (result_reload.toString()).contains("fatal")){
@@ -152,15 +152,15 @@ public class MiniPGHelper {
         } 
 
         (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() +"psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() +"psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-c","select pg_terminate_backend(pid) from pg_stat_activity;");
 
         List<String> result_walSW = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(),
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(), 
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(),
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(), 
                                                         "-c","SELECT  pg_switch_wal();");
 
         if ((result_walSW.toString()).contains("error") || (result_walSW.toString()).contains("fatal")){
@@ -169,9 +169,9 @@ public class MiniPGHelper {
         } 
 
         List<String> result_checkpoint = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-c","CHECKPOINT ;");
 
         if ((result_checkpoint.toString()).contains("error") || (result_checkpoint.toString()).contains("fatal")){
@@ -204,9 +204,9 @@ public class MiniPGHelper {
         }
 
         List<String> result_rw = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-c","ALTER SYSTEM SET default_transaction_read_only TO off;");
 
         if ((result_rw.toString()).contains("error") || (result_rw.toString()).contains("fatal")){
@@ -215,9 +215,9 @@ public class MiniPGHelper {
         } 
 
         List<String> result_reload = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                            "-U", miniPGlocalSetings.getReplicationUser(),
+                                                            "-d", miniPGlocalSetings.getManagementDB(),
                                                             "-c","SELECT pg_reload_conf();");
 
         if ((result_reload.toString()).contains("error") || (result_reload.toString()).contains("fatal")){
@@ -691,9 +691,9 @@ public class MiniPGHelper {
 
     public String setApplicationName(String strAppName){       
         List<String> connstr = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(),
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(),
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "-c", "show primary_conninfo");
         String strConnInfo = connstr.get(0);
 
@@ -701,14 +701,14 @@ public class MiniPGHelper {
             strConnInfo =  strConnInfo + " application_name=" + strAppName;
             strConnInfo = strConnInfo.replace("'","''");
             List<String> result = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() +"psql","-p "+miniPGlocalSetings.getPg_port(),
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+                miniPGlocalSetings.getPgCtlBinPath() +"psql","-p",miniPGlocalSetings.getPg_port(),
+                                                            "-U", miniPGlocalSetings.getReplicationUser(),
+                                                            "-d", miniPGlocalSetings.getManagementDB(),
                                                             "-c", "ALTER SYSTEM SET primary_conninfo='"+strConnInfo+"'");
             result.addAll((new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() +"psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+                miniPGlocalSetings.getPgCtlBinPath() +"psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                            "-U", miniPGlocalSetings.getReplicationUser(),
+                                                            "-d", miniPGlocalSetings.getManagementDB(),
                                                             "-c", "SELECT pg_reload_conf()")); 
     
             for (String cell : result) {
@@ -746,9 +746,9 @@ public class MiniPGHelper {
         }
 
         List<String> connstr = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U",miniPGlocalSetings.getReplicationUser(),
+                                                        "-d",miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "-c", "show primary_conninfo");
         String strConnInfo = connstr.get(0);
 
@@ -756,14 +756,14 @@ public class MiniPGHelper {
             strConnInfo =  strConnInfo + " application_name=" + hostname;
             strConnInfo = strConnInfo.replace("'","''");
             List<String> result = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+ miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+                miniPGlocalSetings.getPgCtlBinPath() + "psql","-p", miniPGlocalSetings.getPg_port(), 
+                                                            "-U", miniPGlocalSetings.getReplicationUser(),
+                                                            "-d", miniPGlocalSetings.getManagementDB(),
                                                             "-c", "ALTER SYSTEM SET primary_conninfo='"+strConnInfo+"'");
             result.addAll((new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+ miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+                miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                            "-U", miniPGlocalSetings.getReplicationUser(),
+                                                            "-d", miniPGlocalSetings.getManagementDB(),
                                                             "-c", "SELECT pg_reload_conf()")); 
     
             for (String cell : result) {
@@ -779,11 +779,11 @@ public class MiniPGHelper {
         return "OK";
     } 
 
-    public String setRepToSync(String strAppName){       
+    public String setRepToSync(String strAppName){
         List<String> currvalue = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                        "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                        "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "-c", "show synchronous_standby_names");
         String curr_value = currvalue.get(0).toString();
         
@@ -794,9 +794,9 @@ public class MiniPGHelper {
         if (curr_value.indexOf(",")> -1){
             for (String appName : curr_value.split(",")){
                 List<String> appname_result = (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                                "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                                "-d "+ miniPGlocalSetings.getManagementDB(),
+                    miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                                "-U",miniPGlocalSetings.getReplicationUser(),
+                                                                "-d",miniPGlocalSetings.getManagementDB(),
                                                                 "-t", "-A", "-c", 
                                                                 "select count(*) from pg_stat_replication where application_name='"+appName+"';");
                 if (Integer.parseInt(appname_result.get(0).toString()) > 0){
@@ -806,9 +806,9 @@ public class MiniPGHelper {
         } else {
             if (curr_value.length() > 1){
                 List<String> appname_result = (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                                    "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                                    "-d "+ miniPGlocalSetings.getManagementDB(),
+                    miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                                    "-U",miniPGlocalSetings.getReplicationUser(),
+                                                                    "-d",miniPGlocalSetings.getManagementDB(),
                                                                     "-t", "-A", "-c", 
                                                                     "select count(*) from pg_stat_replication where application_name='"+curr_value+"';");
                 if (Integer.parseInt(appname_result.get(0).toString()) > 0){
@@ -829,13 +829,16 @@ public class MiniPGHelper {
         sqlPart += ")"; 
 
         List<String> result = (new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p "+miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                            "-U",miniPGlocalSetings.getReplicationUser(),
+                                                            "-d",miniPGlocalSetings.getManagementDB(),
                                                             "-c", "ALTER SYSTEM SET synchronous_standby_names to '"+sqlPart+"'");
         
         result.addAll((new CommandExecutor()).executeCommandSync(
-            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), "-c", "SELECT pg_reload_conf()"));       
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                            "-U",miniPGlocalSetings.getReplicationUser(),
+                                                            "-d",miniPGlocalSetings.getManagementDB(),
+                                                            "-c", "SELECT pg_reload_conf()"));       
 
         for (String cell : result) {
             if (cell.contains("no such file")) {
@@ -852,8 +855,8 @@ public class MiniPGHelper {
         
         List<String> currvalue = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                            "-U",miniPGlocalSetings.getReplicationUser(),
+                                                            "-d",miniPGlocalSetings.getManagementDB(),
                                                             "-t", "-A", "-c", "show synchronous_standby_names");
         String curr_value = currvalue.get(0).toString();
 
@@ -866,8 +869,8 @@ public class MiniPGHelper {
             for (String appName : curr_value.split(",")){
                 List<String> appname_result = (new CommandExecutor()).executeCommandSync(
                     miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
-                                                                "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                                "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                                "-U",miniPGlocalSetings.getReplicationUser(),
+                                                                "-d",miniPGlocalSetings.getManagementDB(),
                                                                 "-t", "-A", "-c", 
                                                                 "select count(*) from pg_stat_replication where application_name='"+appName+"';");
                 if (Integer.parseInt(appname_result.get(0).toString()) > 0){
@@ -878,8 +881,8 @@ public class MiniPGHelper {
             if (curr_value.length() > 1){
                 List<String> appname_result = (new CommandExecutor()).executeCommandSync(
                     miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
-                                                                "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                                "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                                "-U",miniPGlocalSetings.getReplicationUser(),
+                                                                "-d",miniPGlocalSetings.getManagementDB(),
                                                                 "-t", "-A", "-c", 
                                                                 "select count(*) from pg_stat_replication where application_name='"+curr_value+"';");
                 if (Integer.parseInt(appname_result.get(0).toString()) > 0){
@@ -903,13 +906,13 @@ public class MiniPGHelper {
 
         List<String> result = (new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                            "-U",miniPGlocalSetings.getReplicationUser(),
+                                                            "-d",miniPGlocalSetings.getManagementDB(),
                                                             "-c", "ALTER SYSTEM SET synchronous_standby_names to '"+sqlPart+"'");
         result.addAll((new CommandExecutor()).executeCommandSync(
             miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
-                                                            "-U "+ miniPGlocalSetings.getReplicationUser(),
-                                                            "-d "+ miniPGlocalSetings.getManagementDB(),
+                                                            "-U",miniPGlocalSetings.getReplicationUser(),
+                                                            "-d",miniPGlocalSetings.getManagementDB(),
                                                             "-c", "SELECT pg_reload_conf()"));   
 
         for (String cell : result) {
