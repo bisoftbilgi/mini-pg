@@ -766,13 +766,13 @@ public class MiniPGHelper {
                                                             "-d", miniPGlocalSetings.getManagementDB(),
                                                             "-c", "SELECT pg_reload_conf()")); 
     
-            for (String cell : result) {
-                if (cell.contains("no such file")) {
+            log.info("Application Name Fix Result:"+ String.join(" ",result));
+            
+            if (String.join(" ",result).toLowerCase().contains("no such file")) {
                     return null;
-                } else if (cell.contains("error") || cell.contains("ERROR") 
-                            || cell.contains("fatal") || cell.contains("FATAL")){
+            } else if (String.join(" ",result).toLowerCase().contains("error") 
+                            || String.join(" ",result).toLowerCase().contains("fatal")){
                     return null;
-                }
             }
         }
         
