@@ -29,3 +29,7 @@
 bin/
 target/
 .mvn/
+# Local .pgpass dosyaları
+.pgpass
+.pgpass.bak
+.pgpass_root

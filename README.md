@@ -7,3 +7,4 @@ sudo dnf install -y minipg-rpm-package
 
 
 sudo yum install -y minipg-rpm-package
+
