@@ -33,6 +33,9 @@ public class MiniPGLocalSettings {
     @Value("${minipg.pg-version:V12X}")
     private String pgVersion;
 
+    @Value("${minipg.host-ip:}")
+    private String hostIp;
+
     @Value("${minipg.restore-command:/bin/true}")
     private String restoreCommand;
 
@@ -42,6 +45,9 @@ public class MiniPGLocalSettings {
     @Value("${application.management-db:postgres}")
     private String managementDB;
 
+    @Value("${application.connection-mode:vip}")
+    private String connectionMode;
+
     @Value("${application.vip-interface:eth0}")
     private String vipInterface;
 
@@ -50,6 +56,18 @@ public class MiniPGLocalSettings {
 
     @Value("${application.vip-ip-netmask:255.255.255.0}")
     private String vipIpNetmask;
+
+    @Value("${application.proxy-ip:}")
+    private String proxyIp;
+
+    @Value("${application.proxy-write-hostgroup-id:10}")
+    private String proxy_HG;
+
+    @Value("${application.proxy-remote-admin-username:radmin}")
+    private String proxyRemoteAdminUsername;
+
+    @Value("${application.proxy-remote-admin-password:radmin}")
+    private String proxyRemoteAdminPassword;
 
     @Value("${minipg.ssl-mode:prefer}")
     private String sslMode;
