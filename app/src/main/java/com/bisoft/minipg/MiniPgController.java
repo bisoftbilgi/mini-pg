@@ -97,7 +97,7 @@ public class MiniPgController {
     public @ResponseBody
     List<String> start() {
         if (osDistro.equals("Ubuntu")){
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+            List<String> cellValues = (new CommandExecutor()).executeIndependentCommand(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D", miniPGlocalSetings.getPostgresDataPath() ,
                 "-o" , 
@@ -105,7 +105,7 @@ public class MiniPgController {
                 return cellValues;
 
         } else {
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+            List<String> cellValues = (new CommandExecutor()).executeIndependentCommand(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
                 "-D" , miniPGlocalSetings.getPostgresDataPath());
                 return cellValues;
