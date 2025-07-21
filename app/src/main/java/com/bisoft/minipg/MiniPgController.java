@@ -96,6 +96,7 @@ public class MiniPgController {
     @RequestMapping(path = "/start", method = RequestMethod.GET)
     public @ResponseBody
     List<String> start() {
+        log.info("pg_ctl start called..");
         if (osDistro.equals("Ubuntu")){
             List<String> cellValues = (new CommandExecutor()).executeIndependentCommand(
                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
@@ -106,7 +107,7 @@ public class MiniPgController {
 
         } else {
             List<String> cellValues = (new CommandExecutor()).executeIndependentCommand(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
                 "-D" , miniPGlocalSetings.getPostgresDataPath());
                 return cellValues;
         }        

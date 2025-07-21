@@ -84,11 +84,11 @@ public class CommandExecutor {
 
         try {
             // Output'u yazacağı dosya
-            String outputFile = "/tmp/command_output_" + System.currentTimeMillis() + ".log";
+            String outputFile = "command_output_" + System.currentTimeMillis() + ".log";
 
             // Komutu tek bir shell komutu olarak inşa et
             String joinedCommand = String.join(" ", args);
-            String command = String.format("setsid sh -c '%s > %s 2>&1 &'", joinedCommand, outputFile);
+            String command = String.format("/usr/bin/setsid sh -c '%s > %s 2>&1 &'", joinedCommand, outputFile);
 
             // Shell üzerinden çalıştır
             ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
@@ -109,6 +109,8 @@ public class CommandExecutor {
             } else {
                 cellValues.add("Output file not found: " + outputFile);
             }
+
+            outFile.delete();
 
         } catch (Exception e) {
             e.printStackTrace();
