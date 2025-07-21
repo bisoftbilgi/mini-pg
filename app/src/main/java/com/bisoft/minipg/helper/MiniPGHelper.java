@@ -60,9 +60,11 @@ public class MiniPGHelper {
             log.info("Postmaster is running with:"+postmaster_status.toString().substring((postmaster_status.toString().indexOf("PID:")-1), (postmaster_status.toString().indexOf(")")+1)));
         } else {
             log.info("Postmaster auto starting...");
-            (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                                "-D" + miniPGlocalSetings.getPostgresDataPath());
+            this.startPG();
+            // (new CommandExecutor()).executeCommandSync(
+            //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+            //                     "-D" + miniPGlocalSetings.getPostgresDataPath());
+            
         }
 
         List<String> wal_log_result = (new CommandExecutor()).executeCommandSync(
