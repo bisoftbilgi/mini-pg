@@ -88,7 +88,7 @@ public class CommandExecutor {
 
             // Komutu tek bir shell komutu olarak inşa et
             String joinedCommand = String.join(" ", args);
-            String command = String.format("/usr/bin/setsid sh -c '%s > %s 2>&1 &'", joinedCommand, outputFile);
+            String command = String.format("/usr/bin/nohup sh -c '%s > %s 2>&1 &'", joinedCommand, outputFile);
 
             // Shell üzerinden çalıştır
             ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
