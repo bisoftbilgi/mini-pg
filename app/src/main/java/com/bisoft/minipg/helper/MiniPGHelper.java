@@ -952,7 +952,7 @@ public class MiniPGHelper {
                 return null;
             }
 
-            List<String> lines = Files.readAllLines(Paths.get("/tmp/nohup.out"));
+            List<String> lines = Files.readAllLines(Paths.get(logfile));
                 
             return lines;
         } catch (IOException e) {

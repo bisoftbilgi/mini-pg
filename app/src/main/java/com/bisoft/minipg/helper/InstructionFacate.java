@@ -716,6 +716,9 @@ public class InstructionFacate {
                 .replace("{PG_DATA}",pgData)
                 .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
             }
+            
+            fos.flush();
+            fos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
