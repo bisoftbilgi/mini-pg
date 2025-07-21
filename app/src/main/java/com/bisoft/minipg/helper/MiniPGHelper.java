@@ -924,5 +924,43 @@ public class MiniPGHelper {
             }
         }
         return "OK";
-    }  
+    }
+    
+    public List<String> startPG(){
+        try {
+            String filename = "/tmp/pg_start.sh";
+            String logfile = "/tmp/pg_start.log";
+            instructionFacate.createPGStartScript(filename);
+
+            // ProcessBuilder pb = new ProcessBuilder("/bin/bash","nohup","sh", filename, " &");
+            // pb.redirectOutput(new File("/tmp/nohup.out"));
+            // pb.redirectErrorStream(true); // hataları da aynı dosyaya yönlendir
+            // Process p = pb.start();
+            
+            new File(filename).setExecutable(true);
+            ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", 
+                    "nohup " + filename + " > " + logfile + " 2>&1 &");
+                
+            Process p = pb.start();
+                
+            // Wait for nohup command itself to complete
+            int nohupExitCode = p.waitFor();
+            System.out.println("Nohup command exit code: " + nohupExitCode);
+                
+            if (nohupExitCode != 0) {
+                System.err.println("Failed to execute nohup command");
+                return null;
+            }
+
+            List<String> lines = Files.readAllLines(Paths.get("/tmp/nohup.out"));
+                
+            return lines;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            System.err.println("Process interrupted: " + e.getMessage());
+            return null;
+        }
+        return null;     
+    }
 }

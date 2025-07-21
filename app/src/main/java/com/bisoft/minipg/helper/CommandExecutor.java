@@ -1,9 +1,6 @@
 package com.bisoft.minipg.helper;
 
-
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,47 +71,6 @@ public class CommandExecutor {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-
-        return cellValues;
-    }
-
-    public List<String> executeIndependentCommand(String... args) {
-        List<String> cellValues = new ArrayList<>();
-
-        try {
-            // Output'u yazacağı dosya
-            String outputFile = "command_output_" + System.currentTimeMillis() + ".log";
-
-            // Komutu tek bir shell komutu olarak inşa et
-            String joinedCommand = String.join(" ", args);
-            String command = String.format("/usr/bin/nohup sh -c '%s > %s 2>&1 &'", joinedCommand, outputFile);
-
-            // Shell üzerinden çalıştır
-            ProcessBuilder pb = new ProcessBuilder("sh", "-c", command);
-            pb.start();
-
-            // Bağımsız process başladıktan sonra kısa bir süre bekle
-            Thread.sleep(500); // opsiyonel: biraz bekleyip dosya oluşsun diye
-
-            // Çıktıyı dosyadan oku
-            File outFile = new File(outputFile);
-            if (outFile.exists()) {
-                try (BufferedReader reader = new BufferedReader(new FileReader(outFile))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        cellValues.add(line);
-                    }
-                }
-            } else {
-                cellValues.add("Output file not found: " + outputFile);
-            }
-
-            outFile.delete();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            cellValues.add("Exception occurred: " + e.getMessage());
         }
 
         return cellValues;

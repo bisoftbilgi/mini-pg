@@ -696,6 +696,30 @@ public class InstructionFacate {
 
         return (result.size() > 0);
 
-    }  
+    }
+    
+    public void createPGStartScript(final String filename) {
+        try {
+            final String pgData = miniPGlocalSetings.getPostgresDataPath();
+            final String pgCtlBinPath = miniPGlocalSetings.getPgCtlBinPath();
+
+            FileOutputStream fos = new FileOutputStream(filename, false);
+            
+            if (osDistro.equals("Ubuntu")){
+
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\"\n"
+                    .replace("{PG_DATA}",pgData)
+                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{PG_CONF_FILE_FULLPATH}", miniPGlocalSetings.getPgconf_file_fullpath()).getBytes());
+            } else {
+                fos.write("{PG_BIN_PATH}/pg_ctl start -D{PG_DATA}\n"
+                .replace("{PG_DATA}",pgData)
+                .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
 }

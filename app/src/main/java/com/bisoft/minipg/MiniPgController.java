@@ -94,23 +94,24 @@ public class MiniPgController {
     }
 
     @RequestMapping(path = "/start", method = RequestMethod.GET)
-    public @ResponseBody
-    List<String> start() {
+    public @ResponseBody List<String> start() {
         log.info("pg_ctl start called..");
-        if (osDistro.equals("Ubuntu")){
-            List<String> cellValues = (new CommandExecutor()).executeIndependentCommand(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                "-o" , 
-                "\"--config-file="+ miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
-                return cellValues;
 
-        } else {
-            List<String> cellValues = (new CommandExecutor()).executeIndependentCommand(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
-                "-D" , miniPGlocalSetings.getPostgresDataPath());
-                return cellValues;
-        }        
+        return miniPGHelper.startPG();
+        // if (osDistro.equals("Ubuntu")){
+        //     List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+        //         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+        //         "-D", miniPGlocalSetings.getPostgresDataPath() ,
+        //         "-o" , 
+        //         "\"--config-file="+ miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
+        //         return cellValues;
+
+        // } else {
+        //     List<String> cellValues = (new CommandExecutor()).executeCommandSync(
+        //         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start",
+        //         "-D" , miniPGlocalSetings.getPostgresDataPath());
+        //         return cellValues;
+        // }        
     }
 
     @RequestMapping(path = "/stop", method = RequestMethod.GET)
