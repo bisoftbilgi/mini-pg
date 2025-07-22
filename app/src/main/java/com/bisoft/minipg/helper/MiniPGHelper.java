@@ -631,55 +631,6 @@ public class MiniPGHelper {
         }
     }
 
-    // @Deprecated
-    private boolean reGenerateRecoveryConfByExecutingStatement(RewindDTO rewindDTO) {
-
-        String repUser = miniPGlocalSetings.getReplicationUser();
-        if (repUser == null || repUser.equals("")) {
-            repUser = rewindDTO.getUser();
-        }
-
-        log.info("REGENERATING recovery.conf with " + rewindDTO.getMasterIp() + ":" + rewindDTO.getPort());
-        String recoveryConfTemplate = instructionUtil.getRecoveryConfTemplateV12();
-        String recoveryConfSql = "alter system set "
-                + recoveryConfTemplate
-                .replace("{MASTER_IP}", rewindDTO.getMasterIp())
-                .replace("{MASTER_PORT}", rewindDTO.getPort())
-                .replace("{USER}", repUser)
-                .replace("{SSL_MODE}",miniPGlocalSetings.getSslMode())
-                .replace("{SSL_COMPRESSION}",miniPGlocalSetings.getSslCompression());
-//        PgVersion localVersion = localSqlExecutor.getPgVersion(rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
-
-        try {
-            //step:3  1. touch <data>/standby.signal
-            (new CommandExecutor()).executeCommandSync("touch",
-                    miniPGlocalSetings.getPostgresDataPath() + "standby.signal");
-
-            //step:3  1. touch <data>/standby.signal
-            (new CommandExecutor()).executeCommandSync("touch",
-                    miniPGlocalSetings.getPostgresDataPath() + "recovery.signal");
-
-            //step 4:  2. start the server
-            instructionFacate.tryStartSync();
-
-            //step 5:  3. execute sql
-            localSqlExecutor.executeLocalSql(recoveryConfSql, rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
-
-            // 4. reload conf
-            localSqlExecutor.executeLocalSql("SELECT pg_reload_conf()", rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
-            //step 4-a:  2. start the server
-            (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop",
-                    "-D" + miniPGlocalSetings.getPostgresDataPath());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-
-    }
-
     private String getRecoveryConfTemplate() {
 
         if (miniPGlocalSetings.getOs().toLowerCase().startsWith("windows")) {
@@ -928,41 +879,54 @@ public class MiniPGHelper {
         return "OK";
     }
     
-    public List<String> startPG(){
+    public List<String> startPGoverCron(){
         try {
-            String filename = "/tmp/pg_start.sh";
-            String logfile = "/tmp/pg_start.log";
-            instructionFacate.createPGStartScript(filename);
-
-            // ProcessBuilder pb = new ProcessBuilder("/bin/bash","nohup","sh", filename, " &");
-            // pb.redirectOutput(new File("/tmp/nohup.out"));
-            // pb.redirectErrorStream(true); // hataları da aynı dosyaya yönlendir
-            // Process p = pb.start();
-            
-            new File(filename).setExecutable(true);
-            ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", 
-                    "nohup " + filename + " > " + logfile + " 2>&1 &");
-                
-            Process p = pb.start();
-                
-            // Wait for nohup command itself to complete
-            int nohupExitCode = p.waitFor();
-            System.out.println("Nohup command exit code: " + nohupExitCode);
-                
-            if (nohupExitCode != 0) {
-                System.err.println("Failed to execute nohup command");
-                return null;
+            File logFile = new File("/tmp/pg_start.log");
+            if (logFile.exists()){
+                logFile.delete();
             }
 
-            List<String> lines = Files.readAllLines(Paths.get(logfile));
-                
-            return lines;
+            String filename = "/tmp/pg_start.sh";
+            instructionFacate.createPGStartScript(filename);
+            new File(filename).setExecutable(true);
+            String command = "minute=$(date -d \"1 minute\" +\"%M\") && hour=$(date -d \"1 minute\" +\"%H\") && (crontab -l 2>/dev/null; echo \"$minute $hour * * * "+filename+"\") | crontab -";
+            ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+            pb.start();
+
+            while (!logFile.exists()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+            // BufferedReader reader = new BufferedReader(new FileReader("/tmp/pg_start.log"));
+            // int lines = 0;
+            // while (reader.readLine() != null) lines++;
+            // reader.close();
+
+            return Files.readAllLines(Paths.get("/tmp/pg_start.log"));
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            System.err.println("Process interrupted: " + e.getMessage());
-            return null;
-        }
+        } 
         return null;     
+    }
+
+    public String startPG() {
+        List<String> result = instructionFacate.startPGoverUserDaemon();
+        while (startContinues()){
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (String.join(" ", result).contains("running")){
+            return "OK";
+        }
+        return String.join(" ", result);
     }
 }
