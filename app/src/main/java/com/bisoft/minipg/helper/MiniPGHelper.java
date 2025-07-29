@@ -412,38 +412,39 @@ public class MiniPGHelper {
 
                     // 2.3 start the server
                     log.info(String.valueOf(logNumber++)+". step : start server");
-                    if (osDistro.equals("Ubuntu")){
-                        List<String> start_result = (new CommandExecutor()).executeCommandSync(
-                            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                            "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                            "-o" , 
-                            "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath() +"\"");
+                    this.startPG();
+                    // if (osDistro.equals("Ubuntu")){
+                    //     List<String> start_result = (new CommandExecutor()).executeCommandSync(
+                    //         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                    //         "-D", miniPGlocalSetings.getPostgresDataPath() ,
+                    //         "-o" , 
+                    //         "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath() +"\"");
                         
-                        start_result.addAll((new CommandExecutor()).executeCommandSync(
-                                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", "-w",
-                                "-D" , miniPGlocalSetings.getPostgresDataPath()));
+                    //     start_result.addAll((new CommandExecutor()).executeCommandSync(
+                    //             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", "-w",
+                    //             "-D" , miniPGlocalSetings.getPostgresDataPath()));
 
-                        start_result.addAll((new CommandExecutor()).executeCommandSync(
-                                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                                    "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                                    "-o" , 
-                                    "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath() +"\""));                                
-                        log.info("Start Result : "+ String.join(" ", start_result));
-                    } else {
-                        List<String> start_result = (new CommandExecutor()).executeCommandSync(
-                            miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                            "-D" , miniPGlocalSetings.getPostgresDataPath());
+                    //     start_result.addAll((new CommandExecutor()).executeCommandSync(
+                    //                 miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                    //                 "-D", miniPGlocalSetings.getPostgresDataPath() ,
+                    //                 "-o" , 
+                    //                 "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath() +"\""));                                
+                    //     log.info("Start Result : "+ String.join(" ", start_result));
+                    // } else {
+                    //     List<String> start_result = (new CommandExecutor()).executeCommandSync(
+                    //         miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                    //         "-D" , miniPGlocalSetings.getPostgresDataPath());
 
-                        start_result.addAll((new CommandExecutor()).executeCommandSync(
-                                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", "-w",
-                                "-D" , miniPGlocalSetings.getPostgresDataPath()));
+                    //     start_result.addAll((new CommandExecutor()).executeCommandSync(
+                    //             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", "-w",
+                    //             "-D" , miniPGlocalSetings.getPostgresDataPath()));
             
-                        start_result.addAll((new CommandExecutor()).executeCommandSync(
-                                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                                "-D" , miniPGlocalSetings.getPostgresDataPath())); 
-                        log.info("Start Result : "+ String.join(" ", start_result));
+                    //     start_result.addAll((new CommandExecutor()).executeCommandSync(
+                    //             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+                    //             "-D" , miniPGlocalSetings.getPostgresDataPath())); 
+                    //     log.info("Start Result : "+ String.join(" ", start_result));
                          
-                    }
+                    // }
                     
                     Boolean isReplicationUp  = instructionFacate.checkReplication(rebaseUpDTO.getMasterIp(), rebaseUpDTO.getMasterPort(), rebaseUpDTO.getRepUser(), rebaseUpDTO.getRepPassword());
                     if ( isReplicationUp == Boolean.FALSE){
@@ -539,37 +540,35 @@ public class MiniPGHelper {
             instructionFacate.tryTouchingRecovery();
 
             log.info(String.valueOf(logNumber++)+". step : start server");
-            if (osDistro.equals("Ubuntu")){
-                List<String> result = (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                    "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                    "-o" , 
-                    "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
+            this.startPG();
+        //     if (osDistro.equals("Ubuntu")){
+        //         // List<String> result = (new CommandExecutor()).executeCommandSync(
+        //         //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+        //         //     "-D", miniPGlocalSetings.getPostgresDataPath() ,
+        //         //     "-o" , 
+        //         //     "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
+        //         List<String> result = instructionFacate.startPGoverUserDaemon();
+        //         result.addAll((new CommandExecutor()).executeCommandSync(
+        //             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
+        //             "-D" , miniPGlocalSetings.getPostgresDataPath()));
 
-                result.addAll((new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
-                    "-D" , miniPGlocalSetings.getPostgresDataPath()));
-
-                result.addAll((new CommandExecutor()).executeCommandSync(
-                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                        "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                        "-o" , 
-                        "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\""));
+        //         result.addAll(instructionFacate.startPGoverUserDaemon());
                         
-            } else {
-                List<String> result = (new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                    "-D" , miniPGlocalSetings.getPostgresDataPath());
+        //     } else {
+        //         // List<String> result = (new CommandExecutor()).executeCommandSync(
+        //         //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+        //         //     "-D" , miniPGlocalSetings.getPostgresDataPath());
+        //         List<String> result = instructionFacate.startPGoverUserDaemon();
+        //         result.addAll((new CommandExecutor()).executeCommandSync(
+        //             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
+        //             "-D" , miniPGlocalSetings.getPostgresDataPath()));
 
-                result.addAll((new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
-                    "-D" , miniPGlocalSetings.getPostgresDataPath()));
+        //         result.addAll(instructionFacate.startPGoverUserDaemon());
+        //         // result.addAll((new CommandExecutor()).executeCommandSync(
+        //         //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
+        //         //     "-D" , miniPGlocalSetings.getPostgresDataPath()));
 
-                result.addAll((new CommandExecutor()).executeCommandSync(
-                    miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                    "-D" , miniPGlocalSetings.getPostgresDataPath()));
-
-            }        
+        //     }        
             
         }
         Boolean isReplicationUp  = instructionFacate.checkReplication(rewindDTO.getMasterIp(),rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
