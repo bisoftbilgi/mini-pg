@@ -5,10 +5,8 @@ import java.io.InputStreamReader;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
+import java.nio.Buffer;
+import java.util.*;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Controller;
@@ -168,112 +166,159 @@ public class MiniPgController {
     @RequestMapping(path = "/vip-down", method = RequestMethod.GET)
     public @ResponseBody
     String vipDown() throws Exception {
-        ArrayList<String> serverIPAddress = new ArrayList<String>();
+        if (Objects.equals(miniPGlocalSetings.getConnectionMode(), "vip")) {
+            ArrayList<String> serverIPAddress = new ArrayList<String>();
 
-        try {
-            Enumeration<NetworkInterface> enum_netifaces = NetworkInterface.getNetworkInterfaces();
-            while( enum_netifaces.hasMoreElements()){
-                for ( InterfaceAddress iface_addr : enum_netifaces.nextElement().getInterfaceAddresses())
-                    if ( iface_addr.getAddress().toString().contains(".") && iface_addr.getAddress().toString() !="127.0.0.1")
-                    serverIPAddress.add(iface_addr.getAddress().toString().replace("/",""));
+            try {
+                Enumeration<NetworkInterface> enum_netifaces = NetworkInterface.getNetworkInterfaces();
+                while (enum_netifaces.hasMoreElements()) {
+                    for (InterfaceAddress iface_addr : enum_netifaces.nextElement().getInterfaceAddresses())
+                        if (iface_addr.getAddress().toString().contains(".") && iface_addr.getAddress().toString() != "127.0.0.1")
+                            serverIPAddress.add(iface_addr.getAddress().toString().replace("/", ""));
+                }
+            } catch (SocketException e) {
+                e.printStackTrace();
             }
-        } catch (SocketException e) {
-            e.printStackTrace();
+
+            if (!(serverIPAddress.contains(miniPGlocalSetings.getVipIp()))) {
+                log.info("VIP Network checked.OK.");
+                return "OK";
+            }
+
+            StringBuilder result = new StringBuilder();
+            String[] cmd = {"/bin/bash", "-c", "sudo ip address del " + miniPGlocalSetings.getVipIp() + "/" + miniPGlocalSetings.getVipIpNetmask()
+                    + " dev " + miniPGlocalSetings.getVipInterface()};
+            for (String line : cmd) {
+                result.append(line + "\n");
+                log.info(line);
+            }
+
+            ArrayList<String> cellValues = new ArrayList<>();
+
+            Process pb = Runtime.getRuntime().exec(cmd);
+            int resultNum = pb.waitFor();
+
+            String line;
+
+            BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+            BufferedReader error = new BufferedReader(new InputStreamReader(pb.getErrorStream()));
+
+
+            while ((line = input.readLine()) != null) {
+                cellValues.add(line);
+            }
+            input.close();
+
+            Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
+
+            return result.toString();
         }
-
-        if (!(serverIPAddress.contains(miniPGlocalSetings.getVipIp()))){
-            log.info("VIP Network checked.OK.");
-            return "OK";
-        } 
-
-        StringBuilder result = new StringBuilder();
-        String[] cmd = {"/bin/bash", "-c", "sudo ip address del " + miniPGlocalSetings.getVipIp() + "/" + miniPGlocalSetings.getVipIpNetmask()
-                        +" dev "+ miniPGlocalSetings.getVipInterface()};
-        for (String line : cmd) {
-            result.append(line + "\n");
-            log.info(line);
-        }
-
-        ArrayList<String> cellValues = new ArrayList<>();
-
-        Process pb = Runtime.getRuntime().exec(cmd);
-        int resultNum = pb.waitFor();
-
-        String line;
-
-        BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
-        BufferedReader error = new BufferedReader(new InputStreamReader(pb.getErrorStream()));
-
-
-        while ((line = input.readLine()) != null) {
-            cellValues.add(line);
-        }
-        input.close();
-
-        Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
-
-        return result.toString();
+        return "";
     }
 
     @RequestMapping(path = "/vip-up", method = RequestMethod.GET)
     public @ResponseBody
     String vipUp() throws Exception {
-        String[] cmd = {"/bin/bash", "-c", "sudo ip address add "+ miniPGlocalSetings.getVipIp() + "/" + miniPGlocalSetings.getVipIpNetmask()
-                        +" dev "+ miniPGlocalSetings.getVipInterface()};
-        StringBuilder result = new StringBuilder();
-        for (String line : cmd) {
-            result.append(line + "\n");
-            log.info(line);
+        if (Objects.equals(miniPGlocalSetings.getConnectionMode(), "vip")) {
+            String[] cmd = {"/bin/bash", "-c", "sudo ip address add " + miniPGlocalSetings.getVipIp() + "/" + miniPGlocalSetings.getVipIpNetmask()
+                    + " dev " + miniPGlocalSetings.getVipInterface()};
+            StringBuilder result = new StringBuilder();
+            for (String line : cmd) {
+                result.append(line + "\n");
+                log.info(line);
+            }
+
+            ArrayList<String> cellValues = new ArrayList<>();
+            Process pb = Runtime.getRuntime().exec(cmd);
+            int resultNum = pb.waitFor();
+
+            String line;
+
+
+            BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+
+            while ((line = input.readLine()) != null) {
+                cellValues.add(line);
+            }
+            input.close();
+
+            Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
+
+            String postVipUpResult = this.postVipUp();
+
+            return result.toString() + "\n" + postVipUpResult;
+        } else if (Objects.equals(miniPGlocalSetings.getConnectionMode(), "proxy")) {
+            String sql = String.format(
+                "UPDATE pgsql_servers SET hostname = '%s' WHERE hostgroup_id = %s; " +
+                "LOAD PGSQL SERVERS TO RUNTIME; SAVE PGSQL SERVERS TO DISK;",
+                miniPGlocalSetings.getHostIp(), miniPGlocalSetings.getProxy_HG()
+            );
+
+            String[] cmd = {
+                "/bin/bash", "-c",
+                String.format(
+                    "echo \"%s\" | PGPASSWORD='%s' psql -h %s -p 6132 -U %s -d admin",
+                    sql,
+                    miniPGlocalSetings.getProxyRemoteAdminPassword(),
+                    miniPGlocalSetings.getProxyIp(),
+                    miniPGlocalSetings.getProxyRemoteAdminUsername()
+                )
+            };
+
+            try {
+                Process pb = new ProcessBuilder(cmd).start();
+                BufferedReader stdOut = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+                BufferedReader stdErr = new BufferedReader(new InputStreamReader(pb.getErrorStream()));
+
+                String line;
+                while ((line = stdOut.readLine()) != null) {
+                    log.info("[ProxySQL] {}", line);
+                }
+                while ((line = stdErr.readLine()) != null) {
+                    log.error("[ProxySQL ERROR] {}", line);
+                }
+                stdOut.close();
+                stdErr.close();
+
+                int code = pb.waitFor();
+                log.info("[ProxySQL] Exit code: " + code);
+            } catch (Exception e) {
+                log.error("Error occurred while updating proxysql", e);
+            }
         }
-
-        ArrayList<String> cellValues = new ArrayList<>();
-        Process pb = Runtime.getRuntime().exec(cmd);
-        int resultNum = pb.waitFor();
-
-        String line;
-
-
-        BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
-
-        while ((line = input.readLine()) != null) {
-            cellValues.add(line);
-        }
-        input.close();
-
-        Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
-
-        String postVipUpResult = this.postVipUp();
-
-        return result.toString()+"\n"+postVipUpResult;
+        return "Connection mode has to be \"vip\" or \"proxy\". Current Connection Mode is " + miniPGlocalSetings.getConnectionMode();
     }
 
     private
     String postVipUp() throws Exception {
-        String[] cmd = {"/bin/bash", "-c", "sudo " + miniPGlocalSetings.getPostVipUp()};
-        StringBuilder result = new StringBuilder();
-        for (String line : cmd) {
-            result.append(line + "\n");
-            log.info(line);
+        if (Objects.equals(miniPGlocalSetings.getConnectionMode(), "vip")) {
+            String[] cmd = {"/bin/bash", "-c", "sudo " + miniPGlocalSetings.getPostVipUp()};
+            StringBuilder result = new StringBuilder();
+            for (String line : cmd) {
+                result.append(line + "\n");
+                log.info(line);
+            }
+
+            ArrayList<String> cellValues = new ArrayList<>();
+            Process pb = Runtime.getRuntime().exec(cmd);
+            int resultNum = pb.waitFor();
+
+            String line;
+
+
+            BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
+
+            while ((line = input.readLine()) != null) {
+                cellValues.add(line);
+            }
+            input.close();
+
+            Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
+
+
+            return result.toString();
         }
-
-        ArrayList<String> cellValues = new ArrayList<>();
-        Process pb = Runtime.getRuntime().exec(cmd);
-        int resultNum = pb.waitFor();
-
-        String line;
-
-
-        BufferedReader input = new BufferedReader(new InputStreamReader(pb.getInputStream()));
-
-        while ((line = input.readLine()) != null) {
-            cellValues.add(line);
-        }
-        input.close();
-
-        Arrays.stream(IOUtils.toString(pb.getErrorStream()).split("\n")).forEach(errorLine -> log.error(errorLine));
-
-
-        return result.toString();
+        return "";
     }
 
     @RequestMapping(path = "/pre-so", method = RequestMethod.GET)
@@ -290,32 +335,85 @@ public class MiniPgController {
 
     @RequestMapping("/checkvip")
     public @ResponseBody String checkVIPNetwork(){
+        if (Objects.equals(miniPGlocalSetings.getConnectionMode(), "vip")) {
+            ArrayList<String> serverIPAddress = new ArrayList<String>();
 
-        ArrayList<String> serverIPAddress = new ArrayList<String>();
-
-        try {
-            Enumeration<NetworkInterface> enum_netifaces = NetworkInterface.getNetworkInterfaces();
-            while( enum_netifaces.hasMoreElements()){
-                for ( InterfaceAddress iface_addr : enum_netifaces.nextElement().getInterfaceAddresses())
-                    if ( iface_addr.getAddress().toString().contains(".") && iface_addr.getAddress().toString() !="127.0.0.1")
-                    serverIPAddress.add(iface_addr.getAddress().toString().replace("/",""));
-            }
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
-
-        if (serverIPAddress.contains(miniPGlocalSetings.getVipIp())){
-            log.info("VIP Network checked.OK.");
-            return "OK";
-        } else {
             try {
-                this.vipUp();
-                return "VIP-SET:OK";
+                Enumeration<NetworkInterface> enum_netifaces = NetworkInterface.getNetworkInterfaces();
+                while (enum_netifaces.hasMoreElements()) {
+                    for (InterfaceAddress iface_addr : enum_netifaces.nextElement().getInterfaceAddresses())
+                        if (iface_addr.getAddress().toString().contains(".") && iface_addr.getAddress().toString() != "127.0.0.1")
+                            serverIPAddress.add(iface_addr.getAddress().toString().replace("/", ""));
+                }
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+
+            if (serverIPAddress.contains(miniPGlocalSetings.getVipIp())) {
+                log.info("VIP Network checked.OK.");
+                return "OK";
+            } else {
+                try {
+                    this.vipUp();
+                    return "VIP-SET:OK";
+                } catch (Exception e) {
+                    log.error("VIP Network UP error:", e);
+                    return "ERR";
+                }
+            }
+        } else if (Objects.equals(miniPGlocalSetings.getConnectionMode(), "proxy")) {
+
+            try {
+                String sql = String.format(
+                    "SELECT hostname FROM pgsql_servers WHERE hostgroup_id = %s LIMIT 1;",
+                    miniPGlocalSetings.getProxy_HG()
+                );
+
+                String[] cmd = {
+                    "/bin/bash", "-c",
+                    String.format(
+                            "echo \"%s\" | PGPASSWORD='%s' psql -h %s -p 6132 -U %s -d admin -t",
+                            sql,
+                            miniPGlocalSetings.getProxyRemoteAdminPassword(),
+                            miniPGlocalSetings.getProxyIp(),
+                            miniPGlocalSetings.getProxyRemoteAdminUsername()
+                    )
+                };
+
+                ProcessBuilder pb = new ProcessBuilder(cmd);
+                Process process = pb.start();
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String currentMaster = reader.readLine();
+                reader.close();
+
+                int code = process.waitFor();
+                if (code != 0 || currentMaster == null) {
+                    log.warn("[ProxySQL Check ERROR] Could not determine current master — query failed or returned no result.");
+                    return "ERR";
+                }
+
+                String trimmed = currentMaster.trim();
+                String hostIp = miniPGlocalSetings.getHostIp();
+
+                if (trimmed.equals(hostIp)) {
+                    log.info("ProxySQL checked.OK.");
+                    return "OK";
+                } else {
+                    try {
+                        this.vipUp();
+                        return "PROXY-SET:OK";
+                    } catch (Exception e) {
+                        log.error("ProxySQL Update Error: ", e);
+                        return "ERR";
+                    }
+                }
             } catch (Exception e) {
-                log.error("VIP Network UP error:", e);
+                log.error("Proxysql check error:", e);
                 return "ERR";
             }
         }
+        return "UNSUPPORTED-MODE: {" + miniPGlocalSetings.getConnectionMode() +"}";
     }
 
     @RequestMapping(path = "/setappname", method = RequestMethod.POST)
