@@ -668,6 +668,16 @@ public class InstructionFacate {
             postgresBinPath = postgresBinPath + "/";
         }
 
+        File data_dir = new File(miniPGlocalSetings.getPostgresDataPath());
+
+        if (!(data_dir.exists())){
+            try {
+                Files.createDirectories(Paths.get(miniPGlocalSetings.getPostgresDataPath()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         if (osDistro.equals("Ubuntu")){
             serviceContent = """
                     [Unit]
@@ -745,9 +755,12 @@ public class InstructionFacate {
             Paths.get(serviceFile).toFile().setExecutable(false, false);
             
             log.info("PG Service file created for minipg: " + serviceFile);
-            
-            // Systemd komutlarını çalıştır
-            (new CommandExecutor()).executeCommandStr("export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user restart postgresql_minipg.service");
+            try {
+                // Systemd komutlarını çalıştır
+                (new CommandExecutor()).executeCommandStr("export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user restart postgresql_minipg.service");
+            } catch (Exception e) {
+                log.info("error on user pg service start..");
+            }
             List<String> result = new ArrayList<String>();
             try {
                 result = (new CommandExecutor()).executeCommandSync(miniPGlocalSetings.getPgCtlBinPath()+"pg_ctl","-D", miniPGlocalSetings.getPostgresDataPath() , "status");
@@ -756,7 +769,7 @@ public class InstructionFacate {
                 e.printStackTrace();
             }
             return result;
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
