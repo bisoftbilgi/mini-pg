@@ -92,22 +92,10 @@ public class MiniPgController {
     }
 
     @RequestMapping(path = "/start", method = RequestMethod.GET)
-    public @ResponseBody
-    List<String> start() {
-        if (osDistro.equals("Ubuntu")){
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                "-o" , 
-                "\"--config-file="+ miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
-                return cellValues;
+    public @ResponseBody String start() {
+        log.info("pg_ctl start called..");
 
-        } else {
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D" , miniPGlocalSetings.getPostgresDataPath());
-                return cellValues;
-        }        
+        return miniPGHelper.startPG();       
     }
 
     @RequestMapping(path = "/stop", method = RequestMethod.GET)
