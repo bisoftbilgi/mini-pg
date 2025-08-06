@@ -682,39 +682,58 @@ public class InstructionFacate {
             pgDataPath = pgDataPath.substring(0, pgDataPath.length() - 1);
         }
         if (osDistro.equals("Ubuntu")){
+            // serviceContent = """
+            //         [Unit]
+            //         Description=PostgreSQL MiniPG Service
+            //         After=dbus.socket
+            //         Requires=dbus.socket
+
+            //         [Service]
+            //         Type=notify
+            //         User=postgres
+            //         Group=postgres
+            //         Environment=PGDATA={PG_DATA}
+            //         Environment=PGPORT={PG_PORT}
+            //         OOMScoreAdjust=-1000
+
+            //         ExecStartPre={PG_CTL_BIN_PATH}pg_ctl status -D ${PGDATA} || {PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -l ${PGDATA}/postgresql.log
+            //         ExecStart={POSTGRES_BIN_PATH}postgres -D ${PGDATA} -p ${PGPORT}
+            //         ExecReload={PG_CTL_BIN_PATH}pg_ctl reload -D ${PGDATA}
+            //         KillMode=mixed
+            //         KillSignal=SIGINT
+            //         TimeoutSec=300
+            //         Restart=on-failure
+            //         RestartSec=5s
+            //         StandardOutput=journal
+            //         StandardError=journal
+            //         SyslogIdentifier=postgres-minipg
+
+            //         [Install]
+            //         WantedBy=default.target
+            //         """;
             serviceContent = """
                     [Unit]
                     Description=PostgreSQL MiniPG Service
-                    After=dbus.socket
-                    Requires=dbus.socket
+                    After=network.target
 
                     [Service]
-                    Type=notify
-                    User=postgres
-                    Group=postgres
+                    Type=forking
                     Environment=PGDATA={PG_DATA}
-                    Environment=PGPORT={PG_PORT}
-                    OOMScoreAdjust=-1000
-
-                    ExecStartPre={PG_CTL_BIN_PATH}pg_ctl status -D ${PGDATA} || {PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -l ${PGDATA}/postgresql.log
-                    ExecStart={POSTGRES_BIN_PATH}postgres -D ${PGDATA} -p ${PGPORT}
-                    ExecReload={PG_CTL_BIN_PATH}pg_ctl reload -D ${PGDATA}
+                    ExecStart={PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -s
+                    ExecStart={PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -o "--config_file={PG_CONF_PATH}" -s
+                    ExecStop={PG_CTL_BIN_PATH}pg_ctl stop -D ${PGDATA} -s
+                    ExecReload={PG_CTL_BIN_PATH}pg_ctl reload -D ${PGDATA} -s
                     KillMode=mixed
-                    KillSignal=SIGINT
                     TimeoutSec=300
                     Restart=on-failure
-                    RestartSec=5s
-                    StandardOutput=journal
-                    StandardError=journal
-                    SyslogIdentifier=postgres-minipg
 
                     [Install]
                     WantedBy=default.target
                     """;
+
                 serviceContent = serviceContent.replace("{PG_DATA}", miniPGlocalSetings.getPostgresDataPath())
-                                                .replace("{PG_PORT}", miniPGlocalSetings.getPg_port())
                                                 .replace("{PG_CTL_BIN_PATH}", pgCtlBinPath)
-                                                .replace("{POSTGRES_BIN_PATH}", postgresBinPath);
+                                                .replace("{PG_CONF_PATH}", miniPGlocalSetings.getPgconf_file_fullpath());
         } else {
             // serviceContent = """
             //         [Unit]
