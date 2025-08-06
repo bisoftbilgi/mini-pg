@@ -361,7 +361,10 @@ public class MiniPgController {
         String homeDir = System.getProperty("user.home");
         Path pgpassPath = Paths.get(homeDir, ".pgpass");
         try {
-
+            if (!Files.exists(pgpassPath)) {
+                Files.createFile(pgpassPath);
+                log.info(".pgpass filke created..");
+            }
             List<String> existingLines = new ArrayList<>();
             if (Files.exists(pgpassPath)) {
                 existingLines = Files.readAllLines(pgpassPath);
