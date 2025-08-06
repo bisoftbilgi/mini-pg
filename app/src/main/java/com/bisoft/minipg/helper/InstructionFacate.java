@@ -757,7 +757,7 @@ public class InstructionFacate {
             log.info("PG Service file created for minipg: " + serviceFile);
             try {
                 // Systemd komutlarını çalıştır
-                (new CommandExecutor()).executeCommandStr("export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user restart postgresql_minipg.service");
+                (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $(whoami) && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user restart postgresql_minipg.service");
             } catch (Exception e) {
                 log.info("error on user pg service start..");
             }
