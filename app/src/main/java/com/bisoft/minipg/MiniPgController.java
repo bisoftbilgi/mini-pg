@@ -13,10 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.springframework.security.web.util.RedirectUrlBuilder;
@@ -384,11 +387,15 @@ public class MiniPgController {
                 log.info("pgpass file already have values...");
             }
 
-            // Dosya izinlerini ayarla (600 -> sadece kullanıcı okuyup yazabilir)
-            File pgpassFile = pgpassPath.toFile();
-            pgpassFile.setReadable(true, true);
-            pgpassFile.setWritable(true, true);
-            pgpassFile.setExecutable(false);
+            // // Dosya izinlerini ayarla (600 -> sadece kullanıcı okuyup yazabilir)
+            // File pgpassFile = pgpassPath.toFile();
+            // pgpassFile.setReadable(true, true);
+            // pgpassFile.setWritable(true, true);
+            // pgpassFile.setExecutable(false);
+
+            // 0600 => owner read & write only
+            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+            Files.setPosixFilePermissions(pgpassPath, perms);
 
             return "OK";
         } catch (IOException e) {
