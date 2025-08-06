@@ -719,7 +719,6 @@ public class InstructionFacate {
                     [Service]
                     Type=forking
                     Environment=PGDATA={PG_DATA}
-                    ExecStart={PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -s
                     ExecStart={PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -o "--config_file={PG_CONF_PATH}" -s
                     ExecStop={PG_CTL_BIN_PATH}pg_ctl stop -D ${PGDATA} -s
                     ExecReload={PG_CTL_BIN_PATH}pg_ctl reload -D ${PGDATA} -s
