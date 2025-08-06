@@ -677,7 +677,10 @@ public class InstructionFacate {
                 e.printStackTrace();
             }
         }
-
+        String pgDataPath = miniPGlocalSetings.getPostgresDataPath();
+        if  (pgDataPath.endsWith("/")){
+            pgDataPath = pgDataPath.substring(0, pgDataPath.length() - 1);
+        }
         if (osDistro.equals("Ubuntu")){
             serviceContent = """
                     [Unit]
@@ -713,30 +716,51 @@ public class InstructionFacate {
                                                 .replace("{PG_CTL_BIN_PATH}", pgCtlBinPath)
                                                 .replace("{POSTGRES_BIN_PATH}", postgresBinPath);
         } else {
-            serviceContent = """
+            // serviceContent = """
+            //         [Unit]
+            //         Description=PostgreSQL MiniPG Service
+            //         After=dbus.socket
+
+            //         [Service]
+            //         Type=notify
+            //         Environment=PGDATA={PG_DATA}
+            //         OOMScoreAdjust=-1000
+
+            //         ExecStartPre={POSTGRES_BIN_PATH}postgresql-16-check-db-dir ${PGDATA}
+            //         ExecStart={POSTGRES_BIN_PATH}postgres -D ${PGDATA}
+            //         ExecReload=/bin/kill -HUP $MAINPID
+            //         KillMode=mixed
+            //         KillSignal=SIGINT
+            //         TimeoutSec=300
+            //         Restart=on-failure
+            //         RestartSec=5s
+
+            //         [Install]
+            //         WantedBy=default.target
+            //         """;
+
+                serviceContent = """
                     [Unit]
                     Description=PostgreSQL MiniPG Service
-                    After=dbus.socket
+                    After=network.target  # purely cosmetic in a user unit
 
                     [Service]
-                    Type=notify
+                    Type=forking
                     Environment=PGDATA={PG_DATA}
-                    OOMScoreAdjust=-1000
-
-                    ExecStartPre={POSTGRES_BIN_PATH}postgresql-16-check-db-dir ${PGDATA}
-                    ExecStart={POSTGRES_BIN_PATH}postgres -D ${PGDATA}
-                    ExecReload=/bin/kill -HUP $MAINPID
+                    ExecStart={POSTGRES_BIN_PATH}pg_ctl start  -D ${PGDATA} -s
+                    ExecStop={POSTGRES_BIN_PATH}pg_ctl stop   -D ${PGDATA} -s
+                    ExecReload={POSTGRES_BIN_PATH}pg_ctl reload -D ${PGDATA} -s
                     KillMode=mixed
-                    KillSignal=SIGINT
                     TimeoutSec=300
                     Restart=on-failure
-                    RestartSec=5s
 
                     [Install]
                     WantedBy=default.target
                     """;
 
-                serviceContent = serviceContent.replace("{PG_DATA}", miniPGlocalSetings.getPostgresDataPath())
+            
+
+                serviceContent = serviceContent.replace("{PG_DATA}", pgDataPath)
                                                 .replace("{POSTGRES_BIN_PATH}", postgresBinPath);
             
         }
