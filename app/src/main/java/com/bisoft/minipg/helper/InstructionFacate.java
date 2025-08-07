@@ -682,101 +682,36 @@ public class InstructionFacate {
             pgDataPath = pgDataPath.substring(0, pgDataPath.length() - 1);
         }
         if (osDistro.equals("Ubuntu")){
-            // serviceContent = """
-            //         [Unit]
-            //         Description=PostgreSQL MiniPG Service
-            //         After=dbus.socket
-            //         Requires=dbus.socket
-
-            //         [Service]
-            //         Type=notify
-            //         User=postgres
-            //         Group=postgres
-            //         Environment=PGDATA={PG_DATA}
-            //         Environment=PGPORT={PG_PORT}
-            //         OOMScoreAdjust=-1000
-
-            //         ExecStartPre={PG_CTL_BIN_PATH}pg_ctl status -D ${PGDATA} || {PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -l ${PGDATA}/postgresql.log
-            //         ExecStart={POSTGRES_BIN_PATH}postgres -D ${PGDATA} -p ${PGPORT}
-            //         ExecReload={PG_CTL_BIN_PATH}pg_ctl reload -D ${PGDATA}
-            //         KillMode=mixed
-            //         KillSignal=SIGINT
-            //         TimeoutSec=300
-            //         Restart=on-failure
-            //         RestartSec=5s
-            //         StandardOutput=journal
-            //         StandardError=journal
-            //         SyslogIdentifier=postgres-minipg
-
-            //         [Install]
-            //         WantedBy=default.target
-            //         """;
             serviceContent = """
-                    [Unit]
-                    Description=PostgreSQL MiniPG Service
-                    After=network.target
+                [Unit]
+                Description=PostgreSQL MiniPG Service
+                After=network.target
 
-                    [Service]
-                    Type=forking
-                    Environment=PGDATA={PG_DATA}
-                    ExecStart={PG_CTL_BIN_PATH}pg_ctl start -D ${PGDATA} -o "--config_file={PG_CONF_PATH}" -s
-                    ExecStop={PG_CTL_BIN_PATH}pg_ctl stop -D ${PGDATA} -s
-                    ExecReload={PG_CTL_BIN_PATH}pg_ctl reload -D ${PGDATA} -s
-                    KillMode=mixed
-                    TimeoutSec=300
-                    Restart=on-failure
+                [Service]
+                Type=simple
+                ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA} -o "--config_file={PG_CONF_PATH}"
 
-                    [Install]
-                    WantedBy=default.target
-                    """;
+                [Install]
+                WantedBy=default.target
+                """;
 
                 serviceContent = serviceContent.replace("{PG_DATA}", miniPGlocalSetings.getPostgresDataPath())
-                                                .replace("{PG_CTL_BIN_PATH}", pgCtlBinPath)
+                                                .replace("{POSTGRES_BIN_PATH}", postgresBinPath)
                                                 .replace("{PG_CONF_PATH}", miniPGlocalSetings.getPgconf_file_fullpath());
         } else {
-            // serviceContent = """
-            //         [Unit]
-            //         Description=PostgreSQL MiniPG Service
-            //         After=dbus.socket
-
-            //         [Service]
-            //         Type=notify
-            //         Environment=PGDATA={PG_DATA}
-            //         OOMScoreAdjust=-1000
-
-            //         ExecStartPre={POSTGRES_BIN_PATH}postgresql-16-check-db-dir ${PGDATA}
-            //         ExecStart={POSTGRES_BIN_PATH}postgres -D ${PGDATA}
-            //         ExecReload=/bin/kill -HUP $MAINPID
-            //         KillMode=mixed
-            //         KillSignal=SIGINT
-            //         TimeoutSec=300
-            //         Restart=on-failure
-            //         RestartSec=5s
-
-            //         [Install]
-            //         WantedBy=default.target
-            //         """;
 
                 serviceContent = """
-                    [Unit]
-                    Description=PostgreSQL MiniPG Service
-                    After=network.target  # purely cosmetic in a user unit
+                [Unit]
+                Description=PostgreSQL MiniPG Service
+                After=network.target
 
-                    [Service]
-                    Type=forking
-                    Environment=PGDATA={PG_DATA}
-                    ExecStart={POSTGRES_BIN_PATH}pg_ctl start  -D ${PGDATA} -s
-                    ExecStop={POSTGRES_BIN_PATH}pg_ctl stop   -D ${PGDATA} -s
-                    ExecReload={POSTGRES_BIN_PATH}pg_ctl reload -D ${PGDATA} -s
-                    KillMode=mixed
-                    TimeoutSec=300
-                    Restart=on-failure
+                [Service]
+                Type=simple
+                ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA}
 
-                    [Install]
-                    WantedBy=default.target
+                [Install]
+                WantedBy=default.target
                     """;
-
-            
 
                 serviceContent = serviceContent.replace("{PG_DATA}", pgDataPath)
                                                 .replace("{POSTGRES_BIN_PATH}", postgresBinPath);
@@ -799,9 +734,16 @@ public class InstructionFacate {
             log.info("PG Service file created for minipg: " + serviceFile);
             try {
                 // Systemd komutlarını çalıştır
-                (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $(whoami) && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user restart postgresql_minipg.service");
+                (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $USER && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user start postgresql_minipg.service");
             } catch (Exception e) {
                 log.info("error on user pg service start..");
+            }
+            Files.delete(Paths.get(serviceFile));
+            try {
+                // Systemd komutlarını çalıştır
+                (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $USER && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload");
+            } catch (Exception e) {
+                log.info("error on remove user pg service..");
             }
             List<String> result = new ArrayList<String>();
             try {
