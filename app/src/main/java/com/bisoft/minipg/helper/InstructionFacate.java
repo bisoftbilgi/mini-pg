@@ -738,13 +738,6 @@ public class InstructionFacate {
             } catch (Exception e) {
                 log.info("error on user pg service start..");
             }
-            Files.delete(Paths.get(serviceFile));
-            try {
-                // Systemd komutlarını çalıştır
-                (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $USER && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload");
-            } catch (Exception e) {
-                log.info("error on remove user pg service..");
-            }
             List<String> result = new ArrayList<String>();
             try {
                 result = (new CommandExecutor()).executeCommandSync(miniPGlocalSetings.getPgCtlBinPath()+"pg_ctl","-D", miniPGlocalSetings.getPostgresDataPath() , "status");
