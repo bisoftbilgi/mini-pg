@@ -745,6 +745,7 @@ public class InstructionFacate {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+            log.info("startPG over user daemon result:"+ String.join("\n",result));
             return result;
         } catch (IOException e) {
             e.printStackTrace();

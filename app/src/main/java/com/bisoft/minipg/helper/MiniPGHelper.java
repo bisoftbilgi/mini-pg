@@ -916,9 +916,10 @@ public class MiniPGHelper {
     public String startPG() {
         List<String> result = instructionFacate.startPGoverUserDaemon();
         int tryCount = 5;
-        while (startContinues() || tryCount > 0){
+        while (startContinues() && tryCount > 0){
             tryCount --;
             try {
+                log.info("PG is starting please wait :"+tryCount+1);
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
