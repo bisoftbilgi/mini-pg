@@ -382,7 +382,7 @@ public class MiniPgController {
 
             if (!linesToAppend.isEmpty()) {
                 Files.write(pgpassPath, linesToAppend, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-                linesToAppend.forEach(System.out::println);
+                // linesToAppend.forEach(System.out::println);
             } else {
                 log.info("pgpass file already have values...");
             }
