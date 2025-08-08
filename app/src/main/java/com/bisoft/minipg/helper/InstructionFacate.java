@@ -691,6 +691,11 @@ public class InstructionFacate {
                 Type=simple
                 ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA} -o "--config_file={PG_CONF_PATH}"
 
+                # Disable OOM kill on postgres main process
+                OOMScoreAdjust=-1000
+                Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
+                Environment=PG_OOM_ADJUST_VALUE=0
+
                 [Install]
                 WantedBy=default.target
                 """;
@@ -708,6 +713,11 @@ public class InstructionFacate {
                 [Service]
                 Type=simple
                 ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA}
+
+                # Disable OOM kill on postgres main process
+                OOMScoreAdjust=-1000
+                Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
+                Environment=PG_OOM_ADJUST_VALUE=0
 
                 [Install]
                 WantedBy=default.target

@@ -915,11 +915,12 @@ public class MiniPGHelper {
 
     public String startPG() {
         List<String> result = instructionFacate.startPGoverUserDaemon();
-        int tryCount = 5;
+        int tryCount = 10;
         while (startContinues() && tryCount > 0){
             tryCount --;
             try {
-                log.info("PG is starting please wait :"+tryCount+1);
+                log.info("PG is starting please wait :"+tryCount);
+                result = (new CommandExecutor()).executeCommandSync(miniPGlocalSetings.getPgCtlBinPath()+"pg_ctl","-D", miniPGlocalSetings.getPostgresDataPath() , "status");
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
