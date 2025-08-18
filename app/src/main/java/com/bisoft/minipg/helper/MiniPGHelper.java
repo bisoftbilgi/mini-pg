@@ -915,19 +915,44 @@ public class MiniPGHelper {
 
     public String startPG() {
         List<String> result = instructionFacate.startPGoverUserDaemon();
+        
         int tryCount = 10;
-        while (startContinues() && tryCount > 0){
-            tryCount --;
+        boolean started = false;
+
+        while (tryCount > 0 && !started) {
             try {
-                log.info("PG is starting please wait :"+tryCount);
-                result = (new CommandExecutor()).executeCommandSync(miniPGlocalSetings.getPgCtlBinPath()+"pg_ctl","-D", miniPGlocalSetings.getPostgresDataPath() , "status");
+                log.info("PG is starting, please wait... Remaining attempts: " + tryCount);
+
+                result = (new CommandExecutor()).executeCommandSync(
+                        miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+                        "-D", miniPGlocalSetings.getPostgresDataPath(),
+                        "status"
+                );
+
+                // Çıktıda "server is running" geçiyorsa DB başlamış demektir
+                if (String.join(" ", result) != null && String.join(" ", result).contains("server is running")) {
+                    log.info("PostgreSQL started successfully.");
+                    started = true;
+                    break;
+                }
+
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.currentThread().interrupt();
+                log.error("Thread interrupted while waiting for PostgreSQL to start", e);
+                break;
+            } catch (Exception e) {
+                log.error("Error while checking PostgreSQL status", e);
+            } finally {
+                tryCount--;
             }
         }
 
-        if (String.join(" ", result).contains("running")){
+        if (!started) {
+            log.warn("PostgreSQL did not start within the expected time.");
+        }
+
+        if (String.join(" ", result) != null && String.join(" ", result).contains("server is running")) {
             return "OK";
         }
         return String.join(" ", result);
