@@ -705,7 +705,7 @@ public class MiniPGHelper {
         String strConnInfo = connstr.get(0);
 
         if (!strConnInfo.contains(hostname)){
-            strConnInfo =  strConnInfo + " application_name=" + hostname;
+            strConnInfo =  strConnInfo + " application_name=" + '"'+hostname+'"';
             strConnInfo = strConnInfo.replace("'","''");
             List<String> result = (new CommandExecutor()).executeCommandSync(
                 miniPGlocalSetings.getPgCtlBinPath() + "psql","-p", miniPGlocalSetings.getPg_port(), 
