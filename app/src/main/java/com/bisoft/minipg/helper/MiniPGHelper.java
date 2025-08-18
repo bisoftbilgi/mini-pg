@@ -814,7 +814,7 @@ public class MiniPGHelper {
                                                             "-U",miniPGlocalSetings.getReplicationUser(),
                                                             "-d",miniPGlocalSetings.getManagementDB(),
                                                             "-t", "-A", "-c", "show synchronous_standby_names");
-        String curr_value = currvalue.get(0).toString();
+        String curr_value = String.join(" ",currvalue).replace("\"","");
 
         if ((curr_value.indexOf("FIRST") > -1 ) || (curr_value.indexOf("ANY") > -1 )){
             curr_value = curr_value.substring(curr_value.indexOf("(")+1, curr_value.indexOf(")"));
@@ -828,7 +828,7 @@ public class MiniPGHelper {
                                                                 "-U",miniPGlocalSetings.getReplicationUser(),
                                                                 "-d",miniPGlocalSetings.getManagementDB(),
                                                                 "-t", "-A", "-c", 
-                                                                "select count(*) from pg_stat_replication where application_name='"+appName+"';");
+                                                                "select count(*) from pg_stat_replication where application_name='"+appName.replace("\"", "")+"';");
                 if (Integer.parseInt(appname_result.get(0).toString()) > 0){
                     list_new_appName.add(appName);
                 };
@@ -840,21 +840,24 @@ public class MiniPGHelper {
                                                                 "-U",miniPGlocalSetings.getReplicationUser(),
                                                                 "-d",miniPGlocalSetings.getManagementDB(),
                                                                 "-t", "-A", "-c", 
-                                                                "select count(*) from pg_stat_replication where application_name='"+curr_value+"';");
+                                                                "select count(*) from pg_stat_replication where application_name='"+curr_value.replace("\"", "")+"';");
                 if (Integer.parseInt(appname_result.get(0).toString()) > 0){
                     list_new_appName.add(curr_value);
                 };
             }
         }        
 
-        list_new_appName.remove(strAppName);
+        list_new_appName.remove(strAppName.replace("\"", ""));
         String sqlPart = "";
-        if (list_new_appName.size() > 0){        
-            sqlPart = "FIRST "+ list_new_appName.size() + " (";
+        if (list_new_appName.size() > 0){
+            sqlPart = "FIRST "+ list_new_appName.size() + " (";        
             if (list_new_appName.size() > 1){
-                sqlPart += sqlPart.join(",", list_new_appName);
+                String joined = list_new_appName.stream()
+                                                .map(s -> "\"" + s + "\"")
+                                                .collect(Collectors.joining(","));
+                sqlPart += joined;
             } else {
-                sqlPart += list_new_appName.get(0);
+                sqlPart += "\""+list_new_appName.get(0)+"\"";
             }
 
             sqlPart += ")"; 
