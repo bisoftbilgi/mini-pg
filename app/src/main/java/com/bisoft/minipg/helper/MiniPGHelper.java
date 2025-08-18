@@ -738,7 +738,7 @@ public class MiniPGHelper {
                                                         "-U", miniPGlocalSetings.getReplicationUser(),
                                                         "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "-c", "show synchronous_standby_names");
-        String curr_value = currvalue.get(0).toString();
+        String curr_value = String.join(" ",currvalue);
         
         if ((curr_value.indexOf("FIRST") > -1 ) || (curr_value.indexOf("ANY") > -1 )){
             curr_value = curr_value.substring(curr_value.indexOf("(")+1, curr_value.indexOf(")"));
@@ -774,7 +774,10 @@ public class MiniPGHelper {
 
         String sqlPart = "FIRST "+ list_new_appName.size() + " (";
         if (list_new_appName.size() > 1){
-            sqlPart += sqlPart.join("\",\"", list_new_appName);
+            String joined = list_new_appName.stream()
+                                            .map(s -> "\"" + s + "\"")
+                                            .collect(Collectors.joining(","));
+            sqlPart += joined;
         } else {
             sqlPart += "\""+list_new_appName.get(0)+"\"";
         }
