@@ -774,9 +774,9 @@ public class MiniPGHelper {
 
         String sqlPart = "FIRST "+ list_new_appName.size() + " (";
         if (list_new_appName.size() > 1){
-            sqlPart += sqlPart.join(",", list_new_appName);
+            sqlPart += sqlPart.join("\",\"", list_new_appName);
         } else {
-            sqlPart += list_new_appName.get(0);
+            sqlPart += "\""+list_new_appName.get(0)+"\"";
         }
 
         sqlPart += ")"; 
