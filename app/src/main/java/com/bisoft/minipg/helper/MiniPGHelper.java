@@ -738,7 +738,7 @@ public class MiniPGHelper {
                                                         "-U", miniPGlocalSetings.getReplicationUser(),
                                                         "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "-c", "show synchronous_standby_names");
-        String curr_value = String.join(" ",currvalue);
+        String curr_value = String.join(" ",currvalue).replace("\"","");
         
         if ((curr_value.indexOf("FIRST") > -1 ) || (curr_value.indexOf("ANY") > -1 )){
             curr_value = curr_value.substring(curr_value.indexOf("(")+1, curr_value.indexOf(")"));
