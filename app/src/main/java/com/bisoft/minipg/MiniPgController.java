@@ -1,16 +1,28 @@
 package com.bisoft.minipg;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
+import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -94,22 +106,10 @@ public class MiniPgController {
     }
 
     @RequestMapping(path = "/start", method = RequestMethod.GET)
-    public @ResponseBody
-    List<String> start() {
-        if (osDistro.equals("Ubuntu")){
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                "-o" , 
-                "\"--config-file="+ miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
-                return cellValues;
+    public @ResponseBody String start() {
+        log.info("pg_ctl start called..");
 
-        } else {
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D" , miniPGlocalSetings.getPostgresDataPath());
-                return cellValues;
-        }        
+        return miniPGHelper.startPG();       
     }
 
     @RequestMapping(path = "/stop", method = RequestMethod.GET)
@@ -353,4 +353,58 @@ public class MiniPgController {
     String setReplicationToAsync(@RequestBody String strAppName) {
         return miniPGHelper.setRepToAsync(strAppName);
     }
+
+    @RequestMapping(path="/updatepgpass", method = RequestMethod.POST)
+    public @ResponseBody String updatePGPass(@RequestBody String pgpassStr){
+        if (!(pgpassStr.contains(","))){
+            pgpassStr += ",";
+        }
+        List<String> newEntries = Arrays.asList(pgpassStr.split(","));
+
+        String homeDir = System.getProperty("user.home");
+        Path pgpassPath = Paths.get(homeDir, ".pgpass");
+        try {
+            if (!Files.exists(pgpassPath)) {
+                Files.createFile(pgpassPath);
+                log.info(".pgpass filke created..");
+            }
+            List<String> existingLines = new ArrayList<>();
+            if (Files.exists(pgpassPath)) {
+                existingLines = Files.readAllLines(pgpassPath);
+            }
+
+            List<String> linesToAppend = new ArrayList<>();
+            for (String entry : newEntries) {
+                if (!existingLines.contains(entry)) {
+                    linesToAppend.add(entry);
+                }
+            }
+
+            if (!linesToAppend.isEmpty()) {
+                Files.write(pgpassPath, linesToAppend, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                // linesToAppend.forEach(System.out::println);
+            } else {
+                log.info("pgpass file already have values...");
+            }
+
+            // // Dosya izinlerini ayarla (600 -> sadece kullanıcı okuyup yazabilir)
+            // File pgpassFile = pgpassPath.toFile();
+            // pgpassFile.setReadable(true, true);
+            // pgpassFile.setWritable(true, true);
+            // pgpassFile.setExecutable(false);
+
+            // 0600 => owner read & write only
+            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
+            Files.setPosixFilePermissions(pgpassPath, perms);
+
+            return "OK";
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "ERR";            
+        }
+
+      
+    }
+
+
 }

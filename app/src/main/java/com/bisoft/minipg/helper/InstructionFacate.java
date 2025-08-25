@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +19,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -48,24 +48,6 @@ public class InstructionFacate {
         return cellValues;
     }
 
-    public List<String> pgCtlStart() {
-
-        if (osDistro.equals("Ubuntu")){
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                "-o" , 
-                "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
-                return cellValues;
-
-        } else {
-            List<String> cellValues = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D" , miniPGlocalSetings.getPostgresDataPath());
-                return cellValues;
-        }  
-    }
-
     public void checkPoint(String portNumber, String userName, String pword) {
         log.warn("checkpoint is running");
         localSqlExecutor.executeLocalSql(
@@ -86,7 +68,6 @@ public class InstructionFacate {
         );
 
     }
-
 
     public boolean tryTouchingStandby() {
 
@@ -349,62 +330,6 @@ public class InstructionFacate {
         } 
         
         return Boolean.FALSE;
-    }
-
-    public boolean tryStartSync() {
-        boolean result = false;
-        boolean timeout = false;
-
-        if (osDistro.equals("Ubuntu")){
-            List<String> interResult = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D", miniPGlocalSetings.getPostgresDataPath() ,
-                "-o" , 
-                "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
-
-            for (String cell : interResult) {
-                log.info("pg_ctl start command result:", cell);
-                if (cell.contains("done")) {
-                    result = true;
-                    break;
-                }
-                if (cell.contains("did not start in time")) {
-                    timeout = true;
-                    break;
-                }
-            }
-
-        } else {
-            List<String> interResult = (new CommandExecutor()).executeCommandSync(
-                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-                "-D" , miniPGlocalSetings.getPostgresDataPath());
-
-            for (String cell : interResult) {
-                log.info("pg_ctl start command result:", cell);
-                if (cell.contains("done")) {
-                    result = true;
-                    break;
-                }
-                if (cell.contains("did not start in time")) {
-                    timeout = true;
-                    break;
-                }
-            }
-        }        
-
-        if (timeout) {
-            while (startContinues()) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-//                result = true;
-        } else if (!result && !timeout)
-            return false;
-
-        return result;
     }
 
     public boolean tryStopSync() {
@@ -696,6 +621,147 @@ public class InstructionFacate {
 
         return (result.size() > 0);
 
-    }  
+    }
+    
+    public void createPGStartScript(final String filename) {
+        try {
+            final String pgData = miniPGlocalSetings.getPostgresDataPath();
+            String pgCtlBinPath = miniPGlocalSetings.getPgCtlBinPath();
+            if  (!pgCtlBinPath.endsWith("/")){
+                pgCtlBinPath = pgCtlBinPath + "/";
+            }
+            FileOutputStream fos = new FileOutputStream(filename, false);
+            
+            if (osDistro.equals("Ubuntu")){
+
+                fos.write("{PG_BIN_PATH}pg_ctl start -D{PG_DATA} -o \"--config-file={PG_CONF_FILE_FULLPATH}\" > /tmp/pg_start.log 2>&1\n"
+                    .replace("{PG_DATA}",pgData)
+                    .replace("{PG_BIN_PATH}",pgCtlBinPath)
+                    .replace("{PG_CONF_FILE_FULLPATH}", miniPGlocalSetings.getPgconf_file_fullpath()).getBytes());
+            } else {
+                fos.write("{PG_BIN_PATH}pg_ctl start -D{PG_DATA} > /tmp/pg_start.log 2>&1\n"
+                .replace("{PG_DATA}",pgData)
+                .replace("{PG_BIN_PATH}",pgCtlBinPath).getBytes());
+            }
+
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public List<String> startPGoverUserDaemon() {
+        String userHome = System.getProperty("user.home");
+        String serviceDir = userHome + "/.config/systemd/user/";
+        String serviceFile = serviceDir + "postgresql_minipg.service";
+        String serviceContent = "";
+        
+        String pgCtlBinPath = miniPGlocalSetings.getPgCtlBinPath();
+        if  (!pgCtlBinPath.endsWith("/")){
+            pgCtlBinPath = pgCtlBinPath + "/";
+        }
+        String postgresBinPath = miniPGlocalSetings.getPostgresBinPath();
+
+        if  (!postgresBinPath.endsWith("/")){
+            postgresBinPath = postgresBinPath + "/";
+        }
+
+        File data_dir = new File(miniPGlocalSetings.getPostgresDataPath());
+
+        if (!(data_dir.exists())){
+            try {
+                Files.createDirectories(Paths.get(miniPGlocalSetings.getPostgresDataPath()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        String pgDataPath = miniPGlocalSetings.getPostgresDataPath();
+        if  (pgDataPath.endsWith("/")){
+            pgDataPath = pgDataPath.substring(0, pgDataPath.length() - 1);
+        }
+        if (osDistro.equals("Ubuntu")){
+            serviceContent = """
+                [Unit]
+                Description=PostgreSQL MiniPG Service
+                After=network.target
+
+                [Service]
+                Type=simple
+                ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA} -o "--config_file={PG_CONF_PATH}"
+
+                # Disable OOM kill on postgres main process
+                OOMScoreAdjust=-1000
+                Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
+                Environment=PG_OOM_ADJUST_VALUE=0
+
+                [Install]
+                WantedBy=default.target
+                """;
+
+                serviceContent = serviceContent.replace("{PG_DATA}", miniPGlocalSetings.getPostgresDataPath())
+                                                .replace("{POSTGRES_BIN_PATH}", postgresBinPath)
+                                                .replace("{PG_CONF_PATH}", miniPGlocalSetings.getPgconf_file_fullpath());
+        } else {
+
+                serviceContent = """
+                [Unit]
+                Description=PostgreSQL MiniPG Service
+                After=network.target
+
+                [Service]
+                Type=simple
+                ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA}
+
+                # Disable OOM kill on postgres main process
+                OOMScoreAdjust=-1000
+                Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
+                Environment=PG_OOM_ADJUST_VALUE=0
+
+                [Install]
+                WantedBy=default.target
+                    """;
+
+                serviceContent = serviceContent.replace("{PG_DATA}", pgDataPath)
+                                                .replace("{POSTGRES_BIN_PATH}", postgresBinPath);
+            
+        }
+
+        try {
+            // Dizin yoksa oluştur
+            Files.createDirectories(Paths.get(serviceDir));
+            
+            // Dosyayı oluştur ve içeriği yaz
+            Files.writeString(Paths.get(serviceFile), serviceContent, 
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            
+            // Dosya izinlerini ayarla (644)
+            Paths.get(serviceFile).toFile().setReadable(true, false);
+            Paths.get(serviceFile).toFile().setWritable(true, true);
+            Paths.get(serviceFile).toFile().setExecutable(false, false);
+            
+            log.info("PG Service file created for minipg: " + serviceFile);
+            try {
+                // Systemd komutlarını çalıştır
+                (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $USER && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user start postgresql_minipg.service");
+            } catch (Exception e) {
+                log.info("error on user pg service start..");
+            }
+            List<String> result = new ArrayList<String>();
+            try {
+                result = (new CommandExecutor()).executeCommandSync(miniPGlocalSetings.getPgCtlBinPath()+"pg_ctl","-D", miniPGlocalSetings.getPostgresDataPath() , "status");
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            log.info("startPG over user daemon result:"+ String.join("\n",result));
+            return result;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
 
 }

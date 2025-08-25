@@ -1,7 +1,7 @@
 package com.bisoft.minipg.helper;
 
-
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,27 @@ public class CommandExecutor {
         return cellValues;
     }
 
+    public List<String> executeCommandStr(String command) throws IOException, InterruptedException {
+        ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c", command);
+        processBuilder.inheritIO();
+        Process process = processBuilder.start();
 
+        // Read output into a List<String>
+        List<String> outputLines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                outputLines.add(line); // Add each line to the list
+            }
+        }
+        int exitCode = process.waitFor();
+        
+        if (exitCode != 0) {
+            throw new RuntimeException("Command execute error: " + command);
+        }
+        return outputLines;
+    }
     public List<String> executeCommandSync(String... args) {
 
         // log.info("EXECUTING THIS:" + String.join(" ", args));
