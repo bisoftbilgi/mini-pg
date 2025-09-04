@@ -739,6 +739,11 @@ public class MiniPGHelper {
                                                         "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "-c", "show synchronous_standby_names");
         String curr_value = String.join(" ",currvalue).replace("\"","");
+
+        if (curr_value.contains(strAppName)){
+            log.info("Replica already in sync state");
+            return "OK";
+        }
         
         if ((curr_value.indexOf("FIRST") > -1 ) || (curr_value.indexOf("ANY") > -1 )){
             curr_value = curr_value.substring(curr_value.indexOf("(")+1, curr_value.indexOf(")"));
@@ -771,6 +776,7 @@ public class MiniPGHelper {
         }        
 
         list_new_appName.add(strAppName.replace("\"",""));
+        list_new_appName = list_new_appName.stream().distinct().toList();
 
         String sqlPart = "FIRST "+ list_new_appName.size() + " (";
         if (list_new_appName.size() > 1){
