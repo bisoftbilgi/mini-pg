@@ -12,6 +12,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -149,35 +150,17 @@ public class InstructionFacate {
 
     public boolean tryAppendLine(final String filePath, final String newLine) {
         boolean result = false;
+
         try {
-            Path path = Paths.get(filePath);
-
-            // Dosyayı oku
-            List<String> lines = Files.readAllLines(path);
-
-            // Eklenecek satırın key kısmını bul (örn: restore_command)
-            String key = newLine.split("=")[0].trim();
-
-            // Aynı key ile başlayan satırları filtrele
-            List<String> updatedLines = new ArrayList<>();
-            for (String line : lines) {
-                if (!line.trim().startsWith(key)) {
-                    updatedLines.add(line);
-                }
-            }
-
-            // Yeni satırı ekle
-            updatedLines.add(newLine);
-
-            // Dosyayı baştan yaz
-            Files.write(path, updatedLines, StandardOpenOption.TRUNCATE_EXISTING);
-
+            Files.write(Paths.get(filePath), (newLine + "\n").getBytes(), StandardOpenOption.APPEND);
             result = true;
-            log.info("Updated %s with: %s%n", filePath, newLine);
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
+
+        log.warn("===\n trying to append file:{} \n content:{}\n result:{} \n===", filePath, newLine, result);
+
 
         return result;
 
