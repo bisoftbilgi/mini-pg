@@ -11,8 +11,11 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -149,30 +152,49 @@ public class InstructionFacate {
     }
 
     public boolean tryAppendLine(final String filePath, final String newLine) {
-
         boolean result = false;
         try {
-            boolean found = false;
-            try (Scanner scanner = new Scanner(Paths.get(filePath))) {
-                while (scanner.hasNextLine()) {
-                    if (newLine.equals(scanner.nextLine().trim())) {
-                        logger.warn(newLine + " already exists in file " + filePath);
-                        found = true;
-                        break; // sadece döngüyü kırar
-                    }
+            Path path = Paths.get(filePath);
+
+            // Dosyadaki tüm satırları oku
+            List<String> lines = Files.readAllLines(path);
+
+            // Key -> Line eşlemesi (aynı key varsa üzerine yazar, en sonuncu kalır)
+            Map<String, String> keyValueMap = new LinkedHashMap<>();
+
+            for (String line : lines) {
+                String trimmed = line.trim();
+
+                // Boş veya yorum satırlarını doğrudan koru
+                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                    keyValueMap.put(UUID.randomUUID().toString(), line); // uniq key ile koru
+                    continue;
+                }
+
+                // "=" ile split edip key al
+                String[] parts = trimmed.split("=", 2);
+                if (parts.length > 1) {
+                    String key = parts[0].trim();
+                    keyValueMap.put(key, line); // aynı key varsa üzerine yazar
+                } else {
+                    keyValueMap.put(UUID.randomUUID().toString(), line); // format dışı satırları koru
                 }
             }
-            if (!found) {
-                Files.write(Paths.get(filePath), (newLine + "\n").getBytes(), StandardOpenOption.APPEND);
-                log.warn("===\n trying to append file:{} \n content:{}\n result:{} \n===", filePath, newLine, result);
-                result = true;
-            }
+
+            // Güncel satırları al
+            List<String> updatedLines = new ArrayList<>(keyValueMap.values());
+
+            // Dosyayı sıfırla ve yaz
+            Files.write(path, updatedLines, StandardOpenOption.TRUNCATE_EXISTING);
+
+            result = true;
+            log.info("Deduplication and set new values completed for: " + filePath);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return result;
-
     }
 
     public boolean tryAppendLineToAutoConfFile(final String line) {
