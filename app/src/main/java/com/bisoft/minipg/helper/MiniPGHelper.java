@@ -1023,6 +1023,13 @@ public class MiniPGHelper {
                     writer.newLine();
                 }
             }
+
+            (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                            "-U",miniPGlocalSetings.getReplicationUser(),
+                                                            "-d",miniPGlocalSetings.getManagementDB(),
+                                                            "-c", "SELECT pg_reload_conf()");   
+
             return "OK";
         
         } catch (Exception e) {
