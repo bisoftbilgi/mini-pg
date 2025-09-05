@@ -984,6 +984,11 @@ public class MiniPGHelper {
             Path confFile = Paths.get(autoConfPath);
             Path backupFile = Paths.get(autoConfPath + ".bak");
 
+            if (!Files.exists(confFile)) {
+                    log.error("Hata: Dosya bulunamadı: " + autoConfPath);
+                    return null; 
+            }            
+
             // 1. Dosyayı yedekle
             Files.copy(confFile, backupFile, StandardCopyOption.REPLACE_EXISTING);
             log.info("Yedek postgresql.auto.conf oluşturuldu: " + backupFile);
