@@ -402,9 +402,13 @@ public class MiniPgController {
             e.printStackTrace();
             return "ERR";            
         }
-
       
     }
 
+    @RequestMapping(path = "/clearAutoConf", method = RequestMethod.GET)
+    public @ResponseBody
+    String clearAutoConf() {
+        return miniPGHelper.cleanPostgresAutoConf();
+    }
 
 }

@@ -14,11 +14,15 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -969,5 +973,56 @@ public class MiniPGHelper {
             return "OK";
         }
         return String.join(" ", result);
+    }
+
+    public String cleanPostgresAutoConf(){
+        try {
+            // Buraya gerçek pathini yaz
+            String configFilePath = this.getMiniPGlocalSetings().getPgconf_file_fullpath();
+            String autoConfPath = configFilePath.replace("postgresql.conf", "postgresql.auto.conf");;
+            
+            Path confFile = Paths.get(autoConfPath);
+            Path backupFile = Paths.get(autoConfPath + ".bak");
+
+            // 1. Dosyayı yedekle
+            Files.copy(confFile, backupFile, StandardCopyOption.REPLACE_EXISTING);
+            log.info("Yedek postgresql.auto.conf oluşturuldu: " + backupFile);
+
+            // 2. Dosyayı oku
+            List<String> lines = Files.readAllLines(confFile);
+
+            // 3. Parametreleri LinkedHashMap içinde tut (en son değer kalacak şekilde)
+            LinkedHashMap<String, String> paramMap = new LinkedHashMap<>();
+
+            for (String line : lines) {
+                line = line.trim();
+                // boş satır veya yorum satırı (# ile başlayanlar) aynı bırakılır
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+
+                // parametre = değer formatı (postgresql.auto.conf böyle çalışır)
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
+                    // Aynı parametre tekrar edilirse eskiyi ez
+                    paramMap.put(key, value);
+                }
+            }
+
+            // 4. Yeni içeriği yaz
+            try (BufferedWriter writer = Files.newBufferedWriter(confFile)) {
+                for (Map.Entry<String, String> entry : paramMap.entrySet()) {
+                    writer.write(entry.getKey() + " = " + entry.getValue());
+                    writer.newLine();
+                }
+            }
+            return "OK";
+        
+        } catch (Exception e) {
+            log.error("Error on postgresql.auto.conf cleaner. err msg:"+ e.getMessage());
+        }   
+        return null;
     }
 }
