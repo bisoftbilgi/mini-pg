@@ -156,45 +156,35 @@ public class InstructionFacate {
         try {
             Path path = Paths.get(filePath);
 
-            // Dosyadaki tüm satırları oku
+            // Dosyayı oku
             List<String> lines = Files.readAllLines(path);
 
-            // Key -> Line eşlemesi (aynı key varsa üzerine yazar, en sonuncu kalır)
-            Map<String, String> keyValueMap = new LinkedHashMap<>();
+            // Eklenecek satırın key kısmını bul (örn: restore_command)
+            String key = newLine.split("=")[0].trim();
 
+            // Aynı key ile başlayan satırları filtrele
+            List<String> updatedLines = new ArrayList<>();
             for (String line : lines) {
-                String trimmed = line.trim();
-
-                // Boş veya yorum satırlarını doğrudan koru
-                if (trimmed.isEmpty() || trimmed.startsWith("#")) {
-                    keyValueMap.put(UUID.randomUUID().toString(), line); // uniq key ile koru
-                    continue;
-                }
-
-                // "=" ile split edip key al
-                String[] parts = trimmed.split("=", 2);
-                if (parts.length > 1) {
-                    String key = parts[0].trim();
-                    keyValueMap.put(key, line); // aynı key varsa üzerine yazar
-                } else {
-                    keyValueMap.put(UUID.randomUUID().toString(), line); // format dışı satırları koru
+                if (!line.trim().startsWith(key)) {
+                    updatedLines.add(line);
                 }
             }
 
-            // Güncel satırları al
-            List<String> updatedLines = new ArrayList<>(keyValueMap.values());
+            // Yeni satırı ekle
+            updatedLines.add(newLine);
 
-            // Dosyayı sıfırla ve yaz
+            // Dosyayı baştan yaz
             Files.write(path, updatedLines, StandardOpenOption.TRUNCATE_EXISTING);
 
             result = true;
-            log.info("Deduplication and set new values completed for: " + filePath);
+            log.info("Updated %s with: %s%n", filePath, newLine);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return result;
+
     }
 
     public boolean tryAppendLineToAutoConfFile(final String line) {
