@@ -14,11 +14,15 @@ import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -739,6 +743,11 @@ public class MiniPGHelper {
                                                         "-d", miniPGlocalSetings.getManagementDB(),
                                                         "-t", "-A", "-c", "show synchronous_standby_names");
         String curr_value = String.join(" ",currvalue).replace("\"","");
+
+        if (curr_value.contains(strAppName)){
+            log.info("Replica already in sync state");
+            return "OK";
+        }
         
         if ((curr_value.indexOf("FIRST") > -1 ) || (curr_value.indexOf("ANY") > -1 )){
             curr_value = curr_value.substring(curr_value.indexOf("(")+1, curr_value.indexOf(")"));
@@ -771,6 +780,7 @@ public class MiniPGHelper {
         }        
 
         list_new_appName.add(strAppName.replace("\"",""));
+        list_new_appName = list_new_appName.stream().distinct().toList();
 
         String sqlPart = "FIRST "+ list_new_appName.size() + " (";
         if (list_new_appName.size() > 1){
@@ -963,5 +973,68 @@ public class MiniPGHelper {
             return "OK";
         }
         return String.join(" ", result);
+    }
+
+    public String cleanPostgresAutoConf(){
+        try {
+            // Buraya gerçek pathini yaz
+            String configFilePath = this.getMiniPGlocalSetings().getPgconf_file_fullpath();
+            String autoConfPath = configFilePath.replace("postgresql.conf", "postgresql.auto.conf");;
+            
+            Path confFile = Paths.get(autoConfPath);
+            Path backupFile = Paths.get(autoConfPath + ".bak");
+
+            if (!Files.exists(confFile)) {
+                    log.error("Hata: Dosya bulunamadı: " + autoConfPath);
+                    return null; 
+            }            
+
+            // 1. Dosyayı yedekle
+            Files.copy(confFile, backupFile, StandardCopyOption.REPLACE_EXISTING);
+            log.info("Yedek postgresql.auto.conf oluşturuldu: " + backupFile);
+
+            // 2. Dosyayı oku
+            List<String> lines = Files.readAllLines(confFile);
+
+            // 3. Parametreleri LinkedHashMap içinde tut (en son değer kalacak şekilde)
+            LinkedHashMap<String, String> paramMap = new LinkedHashMap<>();
+
+            for (String line : lines) {
+                line = line.trim();
+                // boş satır veya yorum satırı (# ile başlayanlar) aynı bırakılır
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+
+                // parametre = değer formatı (postgresql.auto.conf böyle çalışır)
+                String[] parts = line.split("=", 2);
+                if (parts.length == 2) {
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
+                    // Aynı parametre tekrar edilirse eskiyi ez
+                    paramMap.put(key, value);
+                }
+            }
+
+            // 4. Yeni içeriği yaz
+            try (BufferedWriter writer = Files.newBufferedWriter(confFile)) {
+                for (Map.Entry<String, String> entry : paramMap.entrySet()) {
+                    writer.write(entry.getKey() + " = " + entry.getValue());
+                    writer.newLine();
+                }
+            }
+
+            (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                            "-U",miniPGlocalSetings.getReplicationUser(),
+                                                            "-d",miniPGlocalSetings.getManagementDB(),
+                                                            "-c", "SELECT pg_reload_conf()");   
+
+            return "OK";
+        
+        } catch (Exception e) {
+            log.error("Error on postgresql.auto.conf cleaner. err msg:"+ e.getMessage());
+        }   
+        return null;
     }
 }

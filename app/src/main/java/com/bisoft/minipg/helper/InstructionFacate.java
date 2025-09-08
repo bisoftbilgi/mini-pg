@@ -149,22 +149,7 @@ public class InstructionFacate {
     }
 
     public boolean tryAppendLine(final String filePath, final String newLine) {
-
         boolean result = false;
-        try{
-            Scanner scanner=new Scanner(Paths.get(filePath));
-            while(scanner.hasNextLine()){
-                if(newLine.equals(scanner.nextLine().trim())){
-                    logger.warn(newLine+" already exists in file "+filePath);
-                    break;
-                }else{
-                    // not found
-                }
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
 
         try {
             Files.write(Paths.get(filePath), (newLine + "\n").getBytes(), StandardOpenOption.APPEND);
@@ -178,6 +163,7 @@ public class InstructionFacate {
 
 
         return result;
+
     }
 
     public boolean tryAppendLineToAutoConfFile(final String line) {
