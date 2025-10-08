@@ -503,6 +503,9 @@ public class MiniPGHelper {
 
         if (localVersion == PgVersion.V11X || localVersion == PgVersion.V10X) {
 
+            log.info(String.valueOf(logNumber++)+". step : create recovery.signal");
+            instructionFacate.tryTouchingRecovery();
+
             log.info(String.valueOf(logNumber++)+". create rewind script");
             String filename = "/tmp/rewind.sh";
             instructionFacate.createRewindScript(filename, rewindDTO.getMasterIp(), rewindDTO.getUser(), rewindDTO.getPassword(), rewindDTO.getPort());
@@ -528,57 +531,52 @@ public class MiniPGHelper {
             Boolean revindSuccess = instructionFacate.tryRewindSync(rewindDTO.getMasterIp(),rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
             
             // TODO: check here for syntax and logical error cases
-            if (revindSuccess == null) {
+            if (revindSuccess == null || revindSuccess == Boolean.FALSE) {
                 return " minipg rewind failed.";
             }
             
             log.info(String.valueOf(logNumber++)+". step : Appending Restore Command");
-            instructionFacate.tryAppendRestoreCommandToAutoConfFile();
             instructionFacate.tryToAppendConnInfoToAutoConfFile(rewindDTO.getMasterIp(), rewindDTO.getPort(), repUser);
             instructionFacate.tryAppendLineToAutoConfFile("recovery_target_timeline = 'latest'");
+            cleanPostgresAutoConf();
+            removeRestoreCmdAutoConf();
 
             log.info(String.valueOf(logNumber++)+". step : create standby.signal");
             instructionFacate.tryTouchingStandby();
 
-            log.info(String.valueOf(logNumber++)+". step : create recovery.signal");
-            instructionFacate.tryTouchingRecovery();
-
             log.info(String.valueOf(logNumber++)+". step : start server");
-            this.startPG();
-        //     if (osDistro.equals("Ubuntu")){
-        //         // List<String> result = (new CommandExecutor()).executeCommandSync(
-        //         //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-        //         //     "-D", miniPGlocalSetings.getPostgresDataPath() ,
-        //         //     "-o" , 
-        //         //     "\"--config-file="+miniPGlocalSetings.getPgconf_file_fullpath()+"\"");
-        //         List<String> result = instructionFacate.startPGoverUserDaemon();
-        //         result.addAll((new CommandExecutor()).executeCommandSync(
-        //             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
-        //             "-D" , miniPGlocalSetings.getPostgresDataPath()));
-
-        //         result.addAll(instructionFacate.startPGoverUserDaemon());
-                        
-        //     } else {
-        //         // List<String> result = (new CommandExecutor()).executeCommandSync(
-        //         //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-        //         //     "-D" , miniPGlocalSetings.getPostgresDataPath());
-        //         List<String> result = instructionFacate.startPGoverUserDaemon();
-        //         result.addAll((new CommandExecutor()).executeCommandSync(
-        //             miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "stop", 
-        //             "-D" , miniPGlocalSetings.getPostgresDataPath()));
-
-        //         result.addAll(instructionFacate.startPGoverUserDaemon());
-        //         // result.addAll((new CommandExecutor()).executeCommandSync(
-        //         //     miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl", "start", "-w",
-        //         //     "-D" , miniPGlocalSetings.getPostgresDataPath()));
-
-        //     }        
+            this.startPG();       
             
         }
         Boolean isReplicationUp  = instructionFacate.checkReplication(rewindDTO.getMasterIp(),rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
         if ( isReplicationUp == Boolean.FALSE){
             return null;
         }
+        
+        log.info(String.valueOf(logNumber++)+". step : restore_command set");
+        List<String> result_ro = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p",miniPGlocalSetings.getPg_port(), 
+                                                        "-U", miniPGlocalSetings.getReplicationUser(),
+                                                        "-d", miniPGlocalSetings.getManagementDB(),
+                                                        "-c","ALTER SYSTEM SET restore_command TO '"+ miniPGlocalSetings.getRestoreCommand()+"';");
+
+        if ((result_ro.toString()).contains("error") || (result_ro.toString()).contains("fatal")){
+            log.info(" Error occurrred on altering Master Pg to Read Only, error:"+result_ro.toString());
+            return result_ro.toString();
+        } 
+
+        log.info(String.valueOf(logNumber++)+". step : pg reload conf");
+        List<String> result_reload = (new CommandExecutor()).executeCommandSync(
+            miniPGlocalSetings.getPgCtlBinPath() + "psql","-p", miniPGlocalSetings.getPg_port(),
+                                                            "-U", miniPGlocalSetings.getReplicationUser(),
+                                                            "-d", miniPGlocalSetings.getManagementDB(), 
+                                                            "-c","SELECT pg_reload_conf();");
+
+        if ((result_reload.toString()).contains("error") || (result_reload.toString()).contains("fatal")){
+            log.info(" Error occurrred on pg_reload_conf, error:"+result_reload.toString());
+            return result_reload.toString();
+        } 
+
         return "OK";
     }
 
@@ -1034,6 +1032,33 @@ public class MiniPGHelper {
         
         } catch (Exception e) {
             log.error("Error on postgresql.auto.conf cleaner. err msg:"+ e.getMessage());
+        }   
+        return null;
+    }
+
+    public String removeRestoreCmdAutoConf(){
+        try {
+            String configFilePath = this.getMiniPGlocalSetings().getPgconf_file_fullpath();
+            String autoConfPath = configFilePath.replace("postgresql.conf", "postgresql.auto.conf");;
+            
+            Path confFile = Paths.get(autoConfPath);
+
+            if (!Files.exists(confFile)) {
+                    log.error("Hata: Dosya bulunamadı: " + autoConfPath);
+                    return null; 
+            } 
+
+            String updatedContent = Files.lines(confFile)
+                    .filter(line -> !line.trim().startsWith("restore_command"))
+                    .collect(Collectors.joining(System.lineSeparator()));
+
+            // Güncellenmiş içeriği dosyaya geri yaz
+            Files.write(confFile, updatedContent.getBytes());
+
+            return "OK";
+        
+        } catch (Exception e) {
+            log.error("Error on postgresql.auto.conf restore_cmd remover. err msg:"+ e.getMessage());
         }   
         return null;
     }
