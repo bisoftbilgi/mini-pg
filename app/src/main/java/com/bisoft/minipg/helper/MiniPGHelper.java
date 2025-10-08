@@ -13,10 +13,13 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -395,16 +398,13 @@ public class MiniPGHelper {
                             log.info("data dir not found:"+miniPGlocalSetings.getPostgresDataPath());
                         }
                     }
-
-                    
-
                 } else {
                     log.info("There is no space for data directory back on disk "+ miniPGlocalSetings.getPostgresDataPath().substring(0,miniPGlocalSetings.getPostgresDataPath().indexOf("/", 1)));
                 }
                 
                 try {
                     log.info(String.valueOf(logNumber++)+". step : pb_basebackup starting...");
-                    String command = "{PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}"
+                    String command = "rm -rf {PG_DATA} && {PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}"
                                         .replace("{PG_DATA}",miniPGlocalSetings.getPostgresDataPath())
                                         .replace("{PG_BIN_PATH}",(miniPGlocalSetings.getPgCtlBinPath().endsWith("/") ? miniPGlocalSetings.getPgCtlBinPath().substring(0, miniPGlocalSetings.getPgCtlBinPath().length()-1) : miniPGlocalSetings.getPgCtlBinPath() ))
                                         .replace("{MASTER_IP}",rebaseUpDTO.getMasterIp())
