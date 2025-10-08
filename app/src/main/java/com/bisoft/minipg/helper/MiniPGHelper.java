@@ -349,13 +349,13 @@ public class MiniPGHelper {
                                 try {
                                     Files.deleteIfExists(p);
                                 } catch (IOException e) {
-                                    System.err.println("Error deleting " + p + ": " + e.getMessage());
+                                    log.error("Error deleting " + p + ": " + e.getMessage());
                                 }
                             });
                         }
                     }
                 } catch (IOException e) {
-                    System.err.println("Error processing " + path + ": " + e.getMessage());
+                    log.error("Error processing " + path + ": " + e.getMessage());
                 }             
 
             });
@@ -410,35 +410,51 @@ public class MiniPGHelper {
 
                 } else {
                     log.info("There is no space for data directory back on disk "+ miniPGlocalSetings.getPostgresDataPath().substring(0,miniPGlocalSetings.getPostgresDataPath().indexOf("/", 1)));
-                    // log.info("Passing data directory backup..Removing broken data directory!!!");
-                    // (new CommandExecutor()).executeCommandSync("/bin/bash",
-                    //                                                         "-c",
-                    //                                                         "rm -rf "+  miniPGlocalSetings.getPostgresDataPath());
-                    // (new CommandExecutor()).executeCommandSync("/bin/bash",
-                    //                                                         "-c",
-                    //                                                         "rm -rf "+
-                    //                                                         (miniPGlocalSetings.getPostgresDataPath().endsWith("/") == Boolean.TRUE ? 
-                    //                                                                     miniPGlocalSetings.getPostgresDataPath().substring(0, miniPGlocalSetings.getPostgresDataPath().length() - 1) +"_*" : 
-                    //                                                                     miniPGlocalSetings.getPostgresDataPath() +"_*"));
-
                 }
                 
-
                 try {
                     //2.2 copy master db with pg_basebackup
-                    log.info("1. create pg_basebackup rejoin script");
-                    String filename = "/tmp/rejoin.sh";
-                    instructionFacate.createRebaseScript(filename, rebaseUpDTO.getMasterIp(), rebaseUpDTO.getRepUser(), rebaseUpDTO.getRepPassword(), rebaseUpDTO.getMasterPort());
-                    log.info("2. execute rejoin script");
+                    // log.info("1. create pg_basebackup rejoin script");
+                    // String filename = "/tmp/rejoin.sh";
+                    //instructionFacate.createRebaseScript(filename, rebaseUpDTO.getMasterIp(), rebaseUpDTO.getRepUser(), rebaseUpDTO.getRepPassword(), rebaseUpDTO.getMasterPort());
+                    // log.info("2. execute rejoin script");
                     
-                    List<String> result_script = (new CommandExecutor()).executeCommandSync(
-                    "/bin/bash", filename);
-                    log.info("Rejoin Script output:" + (String.join(" ", result_script)));
-                    if ((String.join(" ", result_script).toLowerCase()).contains("no space left on device")){
-                        return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
-                    }else if((String.join(" ", result_script).toLowerCase()).contains("no pg_hba.conf entry")){
-                        return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
+                    // List<String> result_script = (new CommandExecutor()).executeCommandSync(
+                    // "/bin/bash", filename);
+
+                    // log.info("Rejoin Script output:" + (String.join(" ", result_script)));
+                    // if ((String.join(" ", result_script).toLowerCase()).contains("no space left on device")){
+                    //     return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
+                    // }else if((String.join(" ", result_script).toLowerCase()).contains("no pg_hba.conf entry")){
+                    //     return "pg_basebackup FAILED. Possible Reason :" + String.join(" ", result_script);
+                    // }
+
+                    log.info(String.valueOf(logNumber++)+". step : pb_basebackup starting...");
+                    String command = "{PG_BIN_PATH}/pg_basebackup -h {MASTER_IP} -p {MASTER_PORT} -U {REPLICATION_USER} -Fp -Xs -R -D {PG_DATA}"
+                                        .replace("{PG_DATA}",miniPGlocalSetings.getPostgresDataPath())
+                                        .replace("{PG_BIN_PATH}",(miniPGlocalSetings.getPgCtlBinPath().endsWith("/") ? miniPGlocalSetings.getPgCtlBinPath().substring(0, miniPGlocalSetings.getPgCtlBinPath().length()-1) : miniPGlocalSetings.getPgCtlBinPath() ))
+                                        .replace("{MASTER_IP}",rebaseUpDTO.getMasterIp())
+                                        .replace("{MASTER_PORT}",rebaseUpDTO.getMasterPort())
+                                        .replace("{REPLICATION_USER}",rebaseUpDTO.getRepUser());
+                    log.info("command executing:"+ command);
+                    ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+                    pb.environment().put("PGPASSWORD", rebaseUpDTO.getRepPassword());
+                    Process process = pb.start();
+
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        log.info(line);
                     }
+
+                    // Hata çıktısını oku (stderr)
+                    BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                    while ((line = errorReader.readLine()) != null) {
+                        log.error(line);
+                    }
+
+                    int exitCode = process.waitFor();
+                    log.info("pg_basebackup exit code: " + exitCode);
 
                     // 2.3 start the server
                     log.info(String.valueOf(logNumber++)+". step : start server");
@@ -969,7 +985,7 @@ public class MiniPGHelper {
                         "-D", miniPGlocalSetings.getPostgresDataPath(),
                         "status"
                 );
-
+                log.info("PG is Started res:"+ String.join(" ", result));
                 // Çıktıda "server is running" geçiyorsa DB başlamış demektir
                 if (String.join(" ", result) != null && String.join(" ", result).contains("server is running")) {
                     log.info("PostgreSQL started successfully.");
@@ -977,7 +993,7 @@ public class MiniPGHelper {
                     break;
                 }
 
-                Thread.sleep(1000);
+                Thread.sleep(3000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.error("Thread interrupted while waiting for PostgreSQL to start", e);

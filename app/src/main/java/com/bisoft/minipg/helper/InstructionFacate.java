@@ -676,6 +676,8 @@ public class InstructionFacate {
                 [Service]
                 Type=simple
                 ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA} -o "--config_file={PG_CONF_PATH}"
+                ExecStop={POSTGRES_BIN_PATH}pg_ctl stop -D {PG_DATA}
+                PIDFile={PG_DATA}/postmaster.pid
 
                 # Disable OOM kill on postgres main process
                 OOMScoreAdjust=-1000
@@ -699,6 +701,8 @@ public class InstructionFacate {
                 [Service]
                 Type=simple
                 ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA}
+                ExecStop={POSTGRES_BIN_PATH}pg_ctl stop -D {PG_DATA}
+                PIDFile={PG_DATA}/postmaster.pid
 
                 # Disable OOM kill on postgres main process
                 OOMScoreAdjust=-1000
@@ -728,12 +732,36 @@ public class InstructionFacate {
             Paths.get(serviceFile).toFile().setExecutable(false, false);
             
             log.info("PG Service file created for minipg: " + serviceFile);
-            try {
-                // Systemd komutlarını çalıştır
-                (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $USER && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user start postgresql_minipg.service");
-            } catch (Exception e) {
-                log.info("error on user pg service start..");
-            }
+            
+            // try {
+            //     // Systemd komutlarını çalıştır
+            //     List<String> result = (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $USER && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user stop postgresql_minipg.service && systemctl --user start postgresql_minipg.service");
+            //     log.info("PG Start over user Daemon result:"+ String.join(" ", result));
+            // } catch (Exception e) {
+            //     log.info("error on user pg service start..");
+            // }
+
+            String user = System.getProperty("user.name");
+
+            String cmd = String.format(
+                "sudo loginctl enable-linger %s && " +
+                "export XDG_RUNTIME_DIR=/run/user/$(id -u %s) && " +
+                "systemctl --user daemon-reload && " +
+                "systemctl --user enable postgresql_minipg.service && " +
+                "systemctl --user stop postgresql_minipg.service && " +
+                "systemctl --user start postgresql_minipg.service",
+                user, user
+            );
+
+            String[] command = { "/bin/bash", "-c", cmd };
+
+            Process process = new ProcessBuilder(command)
+                                    .inheritIO()  // Çıktıyı konsola yönlendir
+                                    .start();
+                                    
+            int exitCode = process.waitFor();
+            log.info("PG Start Daemnon ExitCode: " + exitCode);
+
             List<String> result = new ArrayList<String>();
             try {
                 result = (new CommandExecutor()).executeCommandSync(miniPGlocalSetings.getPgCtlBinPath()+"pg_ctl","-D", miniPGlocalSetings.getPostgresDataPath() , "status");
@@ -745,6 +773,8 @@ public class InstructionFacate {
             return result;
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e1) {
+            e1.printStackTrace();
         }
         return null;
 
