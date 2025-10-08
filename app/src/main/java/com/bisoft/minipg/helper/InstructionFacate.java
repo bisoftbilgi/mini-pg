@@ -273,7 +273,7 @@ public class InstructionFacate {
                         + " password=" + password
                         + "'");
 
-        //log.info("pg_rewind command result : "+ String.join("\n",cellValues));
+        log.info("pg_rewind command result : "+ String.join("\n",cellValues));
         // wait for  pg_rewind to be finishes
         while (rewindContinues()) {
             try {
