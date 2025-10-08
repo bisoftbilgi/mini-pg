@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.PropertiesConfigurationLayout;
@@ -333,6 +334,31 @@ public class MiniPGHelper {
                     "stop",
                     "-D" + miniPGlocalSetings.getPostgresDataPath(),
                     "-mi");
+
+            //tablespace pathlerini temizlei path yoksa create et
+            rebaseUpDTO.getTablespaceList().stream().forEach(dirPath -> {
+                Path path = Paths.get(dirPath);
+                try {
+                    if (Files.notExists(path)) {
+                        Files.createDirectories(path);
+                    } else {
+                        try (Stream<Path> files = Files.walk(path)
+                                .filter(p -> !p.equals(path))
+                                .sorted((a, b) -> b.compareTo(a))) {
+                            files.forEach(p -> {
+                                try {
+                                    Files.deleteIfExists(p);
+                                } catch (IOException e) {
+                                    System.err.println("Error deleting " + p + ": " + e.getMessage());
+                                }
+                            });
+                        }
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error processing " + path + ": " + e.getMessage());
+                }             
+
+            });
 
             long pgDataSize = FileUtils.sizeOfDirectory(new File(miniPGlocalSetings.getPostgresDataPath()));
             long freeSpace = 0;
