@@ -511,32 +511,6 @@ public class MiniPGHelper {
                     "stop",
                     "-D" + miniPGlocalSetings.getPostgresDataPath());
 
-
-            //tablespace pathlerini temizlei path yoksa create et
-            rewindDTO.getTablespaceList().stream().forEach(dirPath -> {
-                Path path = Paths.get(dirPath);
-                try {
-                    if (Files.notExists(path)) {
-                        Files.createDirectories(path);
-                    } else {
-                        try (Stream<Path> files = Files.walk(path)
-                                .filter(p -> !p.equals(path))
-                                .sorted((a, b) -> b.compareTo(a))) {
-                            files.forEach(p -> {
-                                try {
-                                    Files.deleteIfExists(p);
-                                } catch (IOException e) {
-                                    log.error("Error deleting " + p + ": " + e.getMessage());
-                                }
-                            });
-                        }
-                    }
-                } catch (IOException e) {
-                    log.error("Error processing " + path + ": " + e.getMessage());
-                }             
-
-            });
-
             log.info(String.valueOf(logNumber++)+". step : do rewind");
             Boolean revindSuccess = instructionFacate.tryRewindSync(rewindDTO.getMasterIp(),rewindDTO.getPort(), rewindDTO.getUser(), rewindDTO.getPassword());
             
