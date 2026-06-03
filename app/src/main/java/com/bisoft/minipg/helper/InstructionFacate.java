@@ -639,145 +639,72 @@ public class InstructionFacate {
     }
 
     public List<String> startPGoverUserDaemon() {
-        String userHome = System.getProperty("user.home");
-        String serviceDir = userHome + "/.config/systemd/user/";
-        String serviceFile = serviceDir + "postgresql_minipg.service";
-        String serviceContent = "";
-        
-        String pgCtlBinPath = miniPGlocalSetings.getPgCtlBinPath();
-        if  (!pgCtlBinPath.endsWith("/")){
-            pgCtlBinPath = pgCtlBinPath + "/";
-        }
         String postgresBinPath = miniPGlocalSetings.getPostgresBinPath();
-
-        if  (!postgresBinPath.endsWith("/")){
+        if (!postgresBinPath.endsWith("/")) {
             postgresBinPath = postgresBinPath + "/";
         }
 
-        File data_dir = new File(miniPGlocalSetings.getPostgresDataPath());
+        String pgDataPath = miniPGlocalSetings.getPostgresDataPath();
+        if (pgDataPath.endsWith("/")) {
+            pgDataPath = pgDataPath.substring(0, pgDataPath.length() - 1);
+        }
 
-        if (!(data_dir.exists())){
+        // data dizini yoksa oluştur (mevcut davranış korunuyor)
+        File data_dir = new File(pgDataPath);
+        if (!data_dir.exists()) {
             try {
-                Files.createDirectories(Paths.get(miniPGlocalSetings.getPostgresDataPath()));
+                Files.createDirectories(Paths.get(pgDataPath));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        String pgDataPath = miniPGlocalSetings.getPostgresDataPath();
-        if  (pgDataPath.endsWith("/")){
-            pgDataPath = pgDataPath.substring(0, pgDataPath.length() - 1);
-        }
-        if (osDistro.equals("Ubuntu")){
-            serviceContent = """
-                [Unit]
-                Description=PostgreSQL MiniPG Service
-                After=network.target
-
-                [Service]
-                Type=simple
-                ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA} -o "--config_file={PG_CONF_PATH}"
-                ExecStop={POSTGRES_BIN_PATH}pg_ctl stop -D {PG_DATA}
-                PIDFile={PG_DATA}/postmaster.pid
-
-                # Disable OOM kill on postgres main process
-                OOMScoreAdjust=-1000
-                Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
-                Environment=PG_OOM_ADJUST_VALUE=0
-
-                [Install]
-                WantedBy=default.target
-                """;
-
-                serviceContent = serviceContent.replace("{PG_DATA}", miniPGlocalSetings.getPostgresDataPath())
-                                                .replace("{POSTGRES_BIN_PATH}", postgresBinPath)
-                                                .replace("{PG_CONF_PATH}", miniPGlocalSetings.getPgconf_file_fullpath());
-        } else {
-
-                serviceContent = """
-                [Unit]
-                Description=PostgreSQL MiniPG Service
-                After=network.target
-
-                [Service]
-                Type=simple
-                ExecStart={POSTGRES_BIN_PATH}postgres -D {PG_DATA}
-                ExecStop={POSTGRES_BIN_PATH}pg_ctl stop -D {PG_DATA}
-                PIDFile={PG_DATA}/postmaster.pid
-
-                # Disable OOM kill on postgres main process
-                OOMScoreAdjust=-1000
-                Environment=PG_OOM_ADJUST_FILE=/proc/self/oom_score_adj
-                Environment=PG_OOM_ADJUST_VALUE=0
-
-                [Install]
-                WantedBy=default.target
-                    """;
-
-                serviceContent = serviceContent.replace("{PG_DATA}", pgDataPath)
-                                                .replace("{POSTGRES_BIN_PATH}", postgresBinPath);
-            
-        }
 
         try {
-            // Dizin yoksa oluştur
-            Files.createDirectories(Paths.get(serviceDir));
-            
-            // Dosyayı oluştur ve içeriği yaz
-            Files.writeString(Paths.get(serviceFile), serviceContent, 
-                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            
-            // Dosya izinlerini ayarla (644)
-            Paths.get(serviceFile).toFile().setReadable(true, false);
-            Paths.get(serviceFile).toFile().setWritable(true, true);
-            Paths.get(serviceFile).toFile().setExecutable(false, false);
-            
-            log.info("PG Service file created for minipg: " + serviceFile);
-            
-            // try {
-            //     // Systemd komutlarını çalıştır
-            //     List<String> result = (new CommandExecutor()).executeCommandStr("sudo loginctl enable-linger $USER && export XDG_RUNTIME_DIR=/run/user/$(id -u) && systemctl --user daemon-reload && systemctl --user enable postgresql_minipg.service && systemctl --user stop postgresql_minipg.service && systemctl --user start postgresql_minipg.service");
-            //     log.info("PG Start over user Daemon result:"+ String.join(" ", result));
-            // } catch (Exception e) {
-            //     log.info("error on user pg service start..");
-            // }
+            List<String> cmd;
 
-            String user = System.getProperty("user.name");
-
-            String cmd = String.format(
-                "sudo loginctl enable-linger %s && " +
-                "export XDG_RUNTIME_DIR=/run/user/$(id -u %s) && " +
-                "systemctl --user daemon-reload && " +
-                "systemctl --user enable postgresql_minipg.service && " +
-                "systemctl --user stop postgresql_minipg.service && " +
-                "systemctl --user start postgresql_minipg.service",
-                user, user
-            );
-
-            String[] command = { "/bin/bash", "-c", cmd };
-
-            Process process = new ProcessBuilder(command)
-                                    .inheritIO()  // Çıktıyı konsola yönlendir
-                                    .start();
-                                    
-            int exitCode = process.waitFor();
-            log.info("PG Start Daemnon ExitCode: " + exitCode);
-
-            List<String> result = new ArrayList<String>();
-            try {
-                result = (new CommandExecutor()).executeCommandSync(miniPGlocalSetings.getPgCtlBinPath()+"pg_ctl","-D", miniPGlocalSetings.getPostgresDataPath() , "status");
-            } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            if (osDistro.equals("Ubuntu")) {
+                // Ubuntu: config dosyası ayrıca belirtiliyor
+                cmd = List.of(
+                    "setsid",
+                    postgresBinPath + "postgres",
+                    "-D", pgDataPath,
+                    "-o", "--config_file=" + miniPGlocalSetings.getPgconf_file_fullpath()
+                );
+            } else {
+                cmd = List.of(
+                    "setsid",
+                    postgresBinPath + "postgres",
+                    "-D", pgDataPath
+                );
             }
-            log.info("startPG over user daemon result:"+ String.join("\n",result));
-            return result;
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
-        return null;
 
+            log.info("Starting PostgreSQL with setsid: " + String.join(" ", cmd));
+
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(false);
+            pb.start();
+            // waitFor() YOK — process minipg'den bağımsız, detach oldu
+
+            log.info("PostgreSQL setsid ile başlatıldı, minipg'den bağımsız.");
+
+        } catch (IOException e) {
+            log.error("PostgreSQL setsid ile başlatılamadı: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Başladığını doğrulama kısmı — mevcut kodla aynı
+        List<String> result = new ArrayList<>();
+        try {
+            result = (new CommandExecutor()).executeCommandSync(
+                miniPGlocalSetings.getPgCtlBinPath() + "pg_ctl",
+                "-D", miniPGlocalSetings.getPostgresDataPath(),
+                "status"
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        log.info("startPG setsid result: " + String.join("\n", result));
+        return result;
     }
 
 }
